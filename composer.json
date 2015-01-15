@@ -1,0 +1,22 @@
+{
+    "name": "jessecascio/spider",
+    "description": "MySQL Parallel Query Library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jesse Cascio",
+            "email": "jessecascio@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "monolog/monolog": "1.11.0",
+        "psr/log": "~1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~3.7.0"
+    },
+    "autoload": {
+        "psr-4": {"Spider\\": "src/Spider"}
+    }
+}

@@ -1,20 +1,28 @@
 <?php
 
-require 'Drivers.php';
-require 'Memi.php';
+namespace Spider\Nest;
 
-class Spider implements Drivers
-{
+/**
+ * Iterface 
+ *
+ * @package Nest
+ * @author  Jesse Cascio <jessecascio@gmail.com>
+ * @see     jessesnet.com
+ */
+class Weeve
+{	
+	private $Driver  = null;
+
 	private $queries = [];
 
 	private $id;
 
-	public function __construct($driver=self::MEMCACHED_DRIVER)
+	public function __construct(Driver $Driver)
 	{
-		// set different drivers to connect to
-		$this->driver = $driver;
-	
+		// unique id
 		$this->id = md5(uniqid('jessecascio/spider',1));
+		// set different drivers to connect to
+		$this->Driver = $Driver;
 	}
 
 	public function weeve($queries)
@@ -24,10 +32,11 @@ class Spider implements Drivers
 
 	public function crawl()
 	{
-		$m = $this->getConnection();
-		$i = 0;	
+		$this->Driver->init();
+
 		foreach ($this->queries as $key => $query) {
-			$m->set('jessecascio/spider'.$i, json_encode([$key=>$query]));
+
+
 			
 			// spawn a fly, passing in the $i value
 			// $c  = "php weeve.php -i3  > /dev/null 2>/dev/null & echo $!"
