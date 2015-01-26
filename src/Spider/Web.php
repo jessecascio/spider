@@ -2,7 +2,9 @@
 
 namespace Spider;
 
-use Spider\Driver\Driver;
+use Spider\Storage;
+use Spider\Connection;
+use Spider\Nest\Spawn;
 
 /**
  * Iterface 
@@ -13,26 +15,38 @@ use Spider\Driver\Driver;
  */
 class Web
 {	
-	private $Driver  = null;
+	private $Connection = null;
+
+	private $Storage = null;
 
 	private $queries = [];
 
-	private $id = '';
+	private $container = '';
 
-	private $pids = [];
-
-	private $trace = '';
+	private $trace = '/dev/null';
 
 	private $memory = 10;
 
-	public $data = [];
+	private $processes = 10;
 	
-	public function __construct(Driver $Driver)
+	private $pid_key = [];
+
+	private $pids = [];
+
+	private $callbacks = [];
+
+	public $data = [];
+
+	public function __construct(Connection\Decorator $Connection)
 	{
 		// unique id
-		$this->id = md5(uniqid('jessecascio/spider',1));
-		// set different drivers to connect to
-		$this->Driver = $Driver;
+		$this->container = md5(uniqid('jessecascio/spider_'.getmypid(),1));
+		$this->Connection = $Connection;
+	}
+
+	public function storage(Storage\Decorator $Storage)
+	{
+		$this->Storage = $Storage;
 	}
 
 	public function queries($queries)
@@ -50,32 +64,91 @@ class Web
 
 	public function memory($mb)
 	{
-		// restriction ???
 		$this->memory = intval($mb);
 	}
 
-	public function crawl()
+	public function processes($processes)
 	{
-		$this->Driver->init();
-		$this->pids = [];
-		$cnt = 0;
-		
-		$cmd_path   = escapeshellarg(__DIR__ . "/Nest/silk.php");
-		$trace_path = trim($this->trace) ? escapeshellarg($this->trace) : '/dev/null';
-
-		foreach ($this->queries as $query) {
-
-			$cmd = "php ".$cmd_path." -q".base64_encode($query)." -m".$this->memory." >> ".$trace_path." 2>&1 & echo $!";
-			
-			$pids[] = trim(shell_exec($cmd));
-			$cnt++;
-		}
-
-		$this->wait();
+		$this->processes = intval($processes);
 	}
 
-	private function wait()
+	public function crawl($callback=null)
 	{
+		// set the callbacks
+		if (is_callable($callback)) {
+			foreach ($this->queries as $key => $query) {
+				$this->callbacks[$key] = $callback;
+			}
+		} else if (is_array($callback)) {
+			$this->callbacks = $callback;
+		}
+
+		$Storage = $this->getStorage();
+		$Storage->init($this->container);
+
+		$Spawn = new Spawn();
+		$Spawn->conn      = $this->Connection->sleep();
+		$Spawn->container = $this->container;
+		$Spawn->memory  = $this->memory;
+		$Spawn->trace   = $this->trace;
+		$Spawn->storage = $Storage->sleep();
+
+		foreach ($this->queries as $key => $query) {
+			$Spawn->query = $query;
+			$Spawn->key = $key;
+			$pid = $Spawn->process();
+			$this->pid_key[$pid] = $key;
+			$this->pids[] = $pid;
+		}
+
+		$this->wait($Storage);
+
+		$Storage->destruct($this->container);
+	}
+
+	private function wait($Storage)
+	{
+		$processed = [];
+
+		while (true) {
+			$procs = array_filter(array_map("trim", explode("\n", shell_exec("pgrep php")))); //left
+			$done  = array_diff($this->pids, $procs); // completed pids
+
+			// have an array of total done
+			// need to determine which have not been processed
+			// @todo Dont need to retain key
+			$fresh = array_diff($done, $processed);
+			
+			if (count($fresh)) {
+				// echo "Jest finished: " . var_dump($fresh) . PHP_EOL;	
+				// grab the query key from the $pid_key
+				// fire the callback for that key
+				foreach ($fresh as $pid) {
+					$key = $this->pid_key[$pid];
+					
+					// if no callback, can be done in a single call
+					$this->data[$key] = $Storage->get($this->container, $key);
+
+					if (isset($this->callbacks[$key]) && is_callable($this->callbacks[$key])) {
+						$this->data[$key] = $this->callbacks[$key]($this->data[$key]);
+					}
+				}
+			}
+
+			$processed = array_unique(array_merge($done, $processed)); 
+			
+			if (count(array_intersect($this->pids, $procs)) == 0) {
+				break;
+			}
+		}
+
+		// $r = $this->Connection->query("SELECT count(*) as count FROM " . $this->container);
+
+		// var_dump($r[0]['count']);
+
+		// var_dump(gzuncompress($r[0]['data']));
+
+
 	/*
 		//Wait for all the busy workers finish their task before starting insertion
         $stillProcessing = true;
@@ -85,7 +158,7 @@ class Web
              * Get all the php processes that are on memory and make sure the workers process is not in the
              * current process list before moving to the next batch
              
-            $currentProcesses = array_map("trim", explode("\n", shell_exec("pgrep php")));
+            
             $diff = array_intersect($processIds, $currentProcesses);
             $stillProcessing = !empty($diff);
 
@@ -102,6 +175,23 @@ class Web
 	*/
 	}
 
+	private function getStorage()
+	{
+		if (!is_null($this->Storage)) {
+			return $this->Storage;
+		}
+
+		// default to mysql storage
+		$params = $this->Connection->params();
+
+		return new Storage\MySQL(
+			$params['db'],
+			$params['usr'],
+			$params['pwd'],
+			$params['hst'],
+			$params['prt']
+		);
+	}
 	/*
 	
         	// spawn a fly, passing in the $i value

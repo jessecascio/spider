@@ -1,6 +1,6 @@
 <?php
 
-namespace Spider\Driver;
+namespace Spider\Storage;
 
 use Exception;
 
@@ -11,7 +11,7 @@ use Exception;
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-class Memcached implements Driver
+class Memcached implements Storage
 {
 	/**
 	 * @var Memcached
