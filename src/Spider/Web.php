@@ -4,73 +4,17 @@ namespace Spider;
 
 use Spider\Storage;
 use Spider\Connection;
-use Spider\Nest\Spawn;
+use Spider\Nest\Weeve;
 
 /**
- * Iterface 
+ * Spider interface 
  *
  * @package Spider
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-class Web
+class Web extends Silk
 {	
-	private $Connection = null;
-
-	private $Storage = null;
-
-	private $queries = [];
-
-	private $container = '';
-
-	private $trace = '/dev/null';
-
-	private $memory = 10;
-
-	private $processes = 10;
-	
-	private $pid_key = [];
-
-	private $pids = [];
-
-	private $callbacks = [];
-
-	public $data = [];
-
-	public function __construct(Connection\Decorator $Connection)
-	{
-		// unique id
-		$this->container = md5(uniqid('jessecascio/spider_'.getmypid(),1));
-		$this->Connection = $Connection;
-	}
-
-	public function storage(Storage\Decorator $Storage)
-	{
-		$this->Storage = $Storage;
-	}
-
-	public function queries($queries)
-	{
-		$this->queries = $queries;
-	}
-
-	public function trace($path)
-	{
-		// verify path ????
-
-		// path to where to trace output
-		$this->trace = $path;
-	}
-
-	public function memory($mb)
-	{
-		$this->memory = intval($mb);
-	}
-
-	public function processes($processes)
-	{
-		$this->processes = intval($processes);
-	}
 
 	public function crawl($callback=null)
 	{
@@ -84,26 +28,22 @@ class Web
 		}
 
 		$Storage = $this->getStorage();
-		$Storage->init($this->container);
+		$Storage->init($this->table);
 
-		$Spawn = new Spawn();
-		$Spawn->conn      = $this->Connection->sleep();
-		$Spawn->container = $this->container;
-		$Spawn->memory  = $this->memory;
-		$Spawn->trace   = $this->trace;
-		$Spawn->storage = $Storage->sleep();
+		$Weeve = $this->getWeeve();
+		$Weeve->storage = $Storage->sleep();
 
 		foreach ($this->queries as $key => $query) {
-			$Spawn->query = $query;
-			$Spawn->key = $key;
-			$pid = $Spawn->process();
+			$Weeve->query = $query;
+			$Weeve->key = $key;
+			$pid = $Weeve->process();
 			$this->pid_key[$pid] = $key;
 			$this->pids[] = $pid;
 		}
 
 		$this->wait($Storage);
 
-		$Storage->destruct($this->container);
+		$Storage->destruct($this->table);
 	}
 
 	private function wait($Storage)
@@ -127,7 +67,7 @@ class Web
 					$key = $this->pid_key[$pid];
 					
 					// if no callback, can be done in a single call
-					$this->data[$key] = $Storage->get($this->container, $key);
+					$this->data[$key] = $Storage->get($this->table, $key);
 
 					if (isset($this->callbacks[$key]) && is_callable($this->callbacks[$key])) {
 						$this->data[$key] = $this->callbacks[$key]($this->data[$key]);
@@ -141,38 +81,19 @@ class Web
 				break;
 			}
 		}
+	}
 
-		// $r = $this->Connection->query("SELECT count(*) as count FROM " . $this->container);
+	// update to inject for testing
+	private function getWeeve()
+	{
+		$Weeve = new Weeve();
+		$Weeve->conn    = $this->Connection->sleep();
+		$Weeve->table   = $this->table;
+		$Weeve->memory  = $this->memory;
+		$Weeve->trace   = $this->trace;
+		
 
-		// var_dump($r[0]['count']);
-
-		// var_dump(gzuncompress($r[0]['data']));
-
-
-	/*
-		//Wait for all the busy workers finish their task before starting insertion
-        $stillProcessing = true;
-        $start = time();
-        while($stillProcessing){
-            
-             * Get all the php processes that are on memory and make sure the workers process is not in the
-             * current process list before moving to the next batch
-             
-            
-            $diff = array_intersect($processIds, $currentProcesses);
-            $stillProcessing = !empty($diff);
-
-                         * if the process took more than 2.5 minutes, then kill the offending ones
-             
-            if ((time() - $start) > 150) {
-                foreach ($currentProcesses as $processId) {
-                    shell_exec("kill ".$processId);
-                }
-            }
-        }
-
-        return !$stillProcessing;	
-	*/
+		return $Weeve;
 	}
 
 	private function getStorage()
@@ -192,13 +113,4 @@ class Web
 			$params['prt']
 		);
 	}
-	/*
-	
-        	// spawn a fly, passing in the $i value
-			// $c  = "php weeve.php -i3  > /dev/null 2>/dev/null & echo $!"
-			// $id = trim(shell_exec($c));
-			/*
-			$command = "php /var/admixt/modules/imageprocessor/imageScript.php -tadjust -w{$width} -h{$height} --ts {$commandLineUrl} --td {$processedFile} -m{$maxAppendFiles} > /dev/null 2>/dev/null & echo $!";
-            $processId = trim(shell_exec($command));
-      */
 }

@@ -42,7 +42,7 @@ $qs['emp2'] = "SELECT * from page LIMIT 5000";
 $qs['emp8'] = "SELECT * from page LIMIT 5000";
 $qs['em8p'] = "SELECT * from page LIMIT 5000";
 
-$Connection = new Connection\MySQL('mediawiki','root','jesse','127.0.0.1','3308');
+$Connection = new Connection\MySQL('mediawiki','root','','127.0.0.1','3308');
 
 // $conn->insert("INSERT INTO foobar VALUES ('asdddd', 'asd')");
 

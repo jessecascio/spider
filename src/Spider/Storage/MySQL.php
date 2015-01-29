@@ -95,6 +95,8 @@ class MySQL implements Decorator
 		
 		$data['data'] = json_decode(gzuncompress($data['data']), true);
 		
+		var_dump(count($data['data']));
+		
 		return $data['data']; 
 	}
 

@@ -37,9 +37,13 @@ class MySQL implements Decorator
 		$this->params['hst'] = $hst;
 		$this->params['prt'] = $prt;
 
+		// verfies connection
 		$this->connect();
 	}
 
+	/**
+	 * Connect to database
+	 */
 	protected function connect()
 	{
 		$dsn = 'mysql:host='.$this->params['hst'].';port='.$this->params['prt'].';dbname='.$this->params['db'].';';
@@ -51,22 +55,38 @@ class MySQL implements Decorator
 		$this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 	}
 
+	/**
+	 * Run a query
+	 * @return array
+	 */
 	public function query($sql)
 	{
 		$stmt = $this->pdo->query($sql);
 		return $stmt->fetchAll();
 	}
 
+	/**
+	 * Insert
+	 * @param string
+	 */
 	public function insert($sql)
 	{
 		$this->pdo->query($sql);
 	}
 
+	/**
+	 * Encoded connection params
+	 * @return string
+	 */
 	public function sleep()
     {
         return json_encode($this->params);
     }
  	
+ 	/**
+	 * Connection params
+	 * @return array
+	 */
  	public function params()
  	{
  		return $this->params;

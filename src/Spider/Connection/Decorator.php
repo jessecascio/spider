@@ -11,5 +11,15 @@ namespace Spider\Connection;
  */
 interface Decorator
 {
+	/**
+	 * Connection params
+	 * @return array
+	 */
 	public function params();
+
+	/**
+	 * Encoded connection params
+	 * @return string
+	 */
+	public function sleep();
 }
