@@ -63,13 +63,13 @@ $Web->crawl(function($data){
 	return $data;
 });
 
-echo count($Web->data) . " total entries" . PHP_EOL;
+echo count($Web->data()) . " total entries" . PHP_EOL;
 
-foreach ($Web->data as $key => $data) {
+foreach ($Web->data() as $key => $data) {
 	echo $key . " has " . count($data) . " pieces" . PHP_EOL;
 }
 
-var_dump($Web->data['emp5']);
+var_dump($Web->data()['emp5']);
 
 return;
 

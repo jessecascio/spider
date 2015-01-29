@@ -3,9 +3,9 @@
 namespace Spider\Connection;
 
 /**
- * Driver decorator
+ * Connection decorator
  *
- * @package Driver
+ * @package Connection
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */

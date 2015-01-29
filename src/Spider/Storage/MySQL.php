@@ -14,10 +14,17 @@ use PDOException;
  */
 class MySQL implements Decorator
 {
+	/**
+	 * @var PDO
+	 */
+	private $pdo = null;
+
+	/**
+	 * @var array
+	 */
 	private $params = array();
 
 	/**
-	 * @todo  REMOVE ????
      * @param string - database
 	 * @param string - user
 	 * @param string - password
@@ -34,6 +41,9 @@ class MySQL implements Decorator
 		$this->params['prt'] = $prt;
 	}
 
+	/**
+	 * Make db connection
+	 */
 	protected function connect()
 	{
 		$dsn = 'mysql:host='.$this->params['hst'].';port='.$this->params['prt'].';dbname='.$this->params['db'].';';
@@ -46,14 +56,23 @@ class MySQL implements Decorator
 	}
 
 	/**
-	 * Driver setup
+	 * @param string
 	 */
-	public function init($key)
+	public function table($table)
+	{
+		// only allow alpha numerics
+		$this->table = preg_replace("/[^A-Za-z0-9]/", '', $table);
+	}
+
+	/**
+	 * Storage setup
+	 */
+	public function init()
 	{
 		$this->connect();
 		
-		// create database
-		$sql = "CREATE TABLE if not exists `".$key."` (
+		// create temp table
+		$sql = "CREATE TABLE if not exists `".$this->table."` (
 					`id` varchar(255) primary key,
 					`data` LONGBLOB 
 				)ENGINE=innodb";
@@ -61,21 +80,24 @@ class MySQL implements Decorator
 		$this->pdo->query($sql);
 	}
 
-	public function destruct($key)
+	/**
+	 * Storage teardown
+	 */
+	public function destruct()
 	{
-		$sql = "DROP TABLE `" . $key . "`";
+		$sql = "DROP TABLE `" . $this->table . "`";
 		$this->pdo->query($sql);
 	}
 
 	/**
 	 * Save value
 	 * @param string
-	 * @param string
+	 * @param mixed
 	 */
-	public function store($container, $key, $val)
+	public function store($id, $data)
 	{
-		$sql = "INSERT INTO ".$container." (id, data)
-			    VALUES (".$this->pdo->quote($key).",".$this->pdo->quote(gzcompress(json_encode($val))).")";
+		$sql = "INSERT INTO `".$this->table."` (id, data)
+			    VALUES (".$this->pdo->quote($id).",".$this->pdo->quote(gzcompress(json_encode($data))).")";
 
 		$this->pdo->query($sql);
 	}
@@ -84,19 +106,17 @@ class MySQL implements Decorator
 	 * Retrieve value
 	 * @param string
 	 */
-	public function get($container, $key)
+	public function get($id)
 	{
 		$sql = "SELECT data
-				FROM ".$container." 
-				WHERE id=".$this->pdo->quote($key);
+				FROM `".$this->table."` 
+				WHERE id=".$this->pdo->quote($id);
 
 		$stmt = $this->pdo->query($sql);
 		$data = $stmt->fetchAll()[0];
 		
 		$data['data'] = json_decode(gzuncompress($data['data']), true);
-		
-		var_dump(count($data['data']));
-		
+			
 		return $data['data']; 
 	}
 
@@ -104,11 +124,15 @@ class MySQL implements Decorator
 	 * Remove value
 	 * @param string
 	 */
-	public function remove($key)
+	public function remove($id)
 	{
 
 	}
  	
+ 	/**
+ 	 * Encoded params
+ 	 * @return string
+ 	 */
  	public function sleep()
     {
     	$d = array(
@@ -119,6 +143,10 @@ class MySQL implements Decorator
     	return json_encode($d);
     }
 
+    /**
+     * Re-connect
+     * @param array
+     */
     public function wake($params)
     {
     	$this->params = $params;

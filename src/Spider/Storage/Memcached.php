@@ -7,11 +7,11 @@ use Exception;
 /**
  * Memcached driver
  *
- * @package Driver
+ * @package Storage
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-class Memcached implements Storage
+class Memcached
 {
 	/**
 	 * @var Memcached

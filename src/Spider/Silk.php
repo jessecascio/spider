@@ -7,7 +7,7 @@ use Spider\Connection;
 use Spider\Nest\Spawn;
 
 /**
- * Base functionality 
+ * Base getter/setter functionality 
  *
  * @package Spider
  * @author  Jesse Cascio <jessecascio@gmail.com>
@@ -15,105 +15,103 @@ use Spider\Nest\Spawn;
  */
 class Silk
 {	
+	/**
+	 * @var Spider\Connection\Decorator
+	 */
 	protected $Connection = null;
 
+	/**
+	 * @var Spider\Storage\Decorator
+	 */
 	protected $Storage = null;
 
-	protected $queries = [];
+	/**
+	 * @var array
+	 */
+	protected $queries = array();
 
+	/**
+	 * Unique id used for tmp table name
+	 * @var string
+	 */
 	protected $table = '';
 
+	/**
+	 * Output path
+	 * @var string
+	 */
 	protected $trace = '/dev/null';
 
+	/**
+	 * Memory limit per thread
+	 * @var int
+	 */
 	protected $memory = 10;
 
+	/**
+	 * Process limit
+	 * @var int
+	 */
 	protected $processes = 10;
 	
-	protected $pid_key = [];
+	/**
+	 * Results
+	 * @var array
+	 */
+	protected $data = [];
 
-	protected $pids = [];
-
-	protected $callbacks = [];
-
-	public $data = [];
-
+	/**
+	 * @param Spider\Connection\Decorator
+	 */
 	public function __construct(Connection\Decorator $Connection)
 	{
-		// unique id
+		// set unique id
 		$this->table      = md5(uniqid('jessecascio/spider_'.getmypid(), true));
 		$this->Connection = $Connection;
 	}
 
+	/**
+	 * @param Spider\Storage\Decorator
+	 */
 	public function storage(Storage\Decorator $Storage)
 	{
 		$this->Storage = $Storage;
 	}
 
+	/**
+	 * @param array
+	 */
 	public function queries(array $queries)
 	{
 		$this->queries = $queries;
 	}
 
+	/**
+	 * @param string
+	 */
 	public function trace($path)
 	{
-		// verify path ????
-
-		// path to where to trace output
 		$this->trace = $path;
 	}
 
+	/**
+	 * @param int
+	 */
 	public function memory($mb)
 	{
 		$this->memory = intval($mb);
 	}
 
+	/**
+	 * @param int
+	 */
 	public function processes($processes)
 	{
 		$this->processes = intval($processes);
 	}
 
-
-		// $r = $this->Connection->query("SELECT count(*) as count FROM " . $this->table);
-
-		// var_dump($r[0]['count']);
-
-		// var_dump(gzuncompress($r[0]['data']));
-
-
-	/*
-		//Wait for all the busy workers finish their task before starting insertion
-        $stillProcessing = true;
-        $start = time();
-        while($stillProcessing){
-            
-             * Get all the php processes that are on memory and make sure the workers process is not in the
-             * current process list before moving to the next batch
-             
-            
-            $diff = array_intersect($processIds, $currentProcesses);
-            $stillProcessing = !empty($diff);
-
-                         * if the process took more than 2.5 minutes, then kill the offending ones
-             
-            if ((time() - $start) > 150) {
-                foreach ($currentProcesses as $processId) {
-                    shell_exec("kill ".$processId);
-                }
-            }
-        }
-
-        return !$stillProcessing;	
-	*/
-	
-
-	
-	/*
-	
-        	// spawn a fly, passing in the $i value
-			// $c  = "php weeve.php -i3  > /dev/null 2>/dev/null & echo $!"
-			// $id = trim(shell_exec($c));
-			/*
-			$command = "php /var/admixt/modules/imageprocessor/imageScript.php -tadjust -w{$width} -h{$height} --ts {$commandLineUrl} --td {$processedFile} -m{$maxAppendFiles} > /dev/null 2>/dev/null & echo $!";
-            $processId = trim(shell_exec($command));
-      */
+	public function data()
+	{
+		return $this->data;
+	}
 }

@@ -3,33 +3,49 @@
 namespace Spider\Storage;
 
 /**
- * Driver decorator
+ * Storage decorator
  *
- * @package Driver
+ * @package Storage
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
 interface Decorator
 {
 	/**
-	 * Driver setup
+	 * Set table name
 	 */
-	public function init($key);
+	public function table($table);
+	
+	/**
+	 * Storage setup
+	 */
+	public function init();
 
 	/**
-	 * Save value
-	 * @param string
-	 * @param string
+	 * Storage teardown
 	 */
-	public function store($container, $key, $val);
+	public function destruct();
 
 	/**
-	 * Retrieve value
+	 * @param string
+	 * @param mixed
+	 */
+	public function store($id, $data);
+
+	/**
 	 * @param string
 	 */
-	public function get($container, $key);
+	public function get($id);
 
-	public function sleep();
+	/**
+ 	 * Encoded params
+ 	 * @return string
+ 	 */
+ 	public function sleep();
 
-	public function wake($params);
+	 /**
+     * Re-connect
+     * @param array
+     */
+    public function wake($params);
 }

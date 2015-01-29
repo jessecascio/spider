@@ -1,6 +1,6 @@
 <?php
 
-namespace Spider\Nest;
+namespace Spider;
 
 /**
  * Creating new processes 
@@ -9,25 +9,51 @@ namespace Spider\Nest;
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-class Weeve
+class Nest
 {	
+	/**
+	 * @var string
+	 */
 	public $table = '';
 
+	/**
+	 * Query key
+	 * @var string
+	 */
 	public $key = '';
 
+	/**
+	 * @var int
+	 */
 	public $memory = 10;
 
+	/**
+	 * Trace path
+	 * @var string
+	 */
 	public $trace = '/dev/null';
 
+	/**
+	 * @var string
+	 */
 	public $query = '';
 
+	/**
+	 * @var string
+	 */
 	public $conn = '';
 
+	/**
+	 * @var string
+	 */
 	public $storage = '';
 
-	public function process()
+	/**
+	 * Create new process
+	 */
+	public function spawn()
 	{
-		$php     = escapeshellarg(__DIR__ . "/silk.php");
+		$php     = escapeshellarg(__DIR__ . "/weeve.php");
 		$query   = base64_encode($this->query);
 		$conn    = base64_encode($this->conn);
 		$storage = base64_encode($this->storage);

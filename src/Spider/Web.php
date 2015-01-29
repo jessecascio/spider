@@ -15,28 +15,45 @@ use Spider\Nest\Weeve;
  */
 class Web extends Silk
 {	
+	/**
+	 * @var array
+	 */
+	protected $pids = [];
 
+	/**
+	 * Map pids to query keys
+	 * @var array
+	 */
+	protected $pid_key = [];
+
+	/**
+	 * Map query keys to callback functions
+	 * @var array
+	 */
+	protected $callbacks = [];
+
+	/**
+	 * @param mixed
+	 */
 	public function crawl($callback=null)
 	{
-		// set the callbacks
-		if (is_callable($callback)) {
-			foreach ($this->queries as $key => $query) {
-				$this->callbacks[$key] = $callback;
-			}
-		} else if (is_array($callback)) {
-			$this->callbacks = $callback;
+		if (!is_null($callback)) {
+			$this->setCallbacks($callback);
 		}
 
 		$Storage = $this->getStorage();
-		$Storage->init($this->table);
+		$Storage->table($this->table);
+		$Storage->init();
 
-		$Weeve = $this->getWeeve();
-		$Weeve->storage = $Storage->sleep();
+		$Nest = $this->getNest();
+		$Nest->storage = $Storage->sleep();
 
 		foreach ($this->queries as $key => $query) {
-			$Weeve->query = $query;
-			$Weeve->key = $key;
-			$pid = $Weeve->process();
+			$Nest->query = $query;
+			$Nest->key   = $key;
+
+			$pid = $Nest->spawn();
+
 			$this->pid_key[$pid] = $key;
 			$this->pids[] = $pid;
 		}
@@ -67,7 +84,7 @@ class Web extends Silk
 					$key = $this->pid_key[$pid];
 					
 					// if no callback, can be done in a single call
-					$this->data[$key] = $Storage->get($this->table, $key);
+					$this->data[$key] = $Storage->get($key);
 
 					if (isset($this->callbacks[$key]) && is_callable($this->callbacks[$key])) {
 						$this->data[$key] = $this->callbacks[$key]($this->data[$key]);
@@ -83,26 +100,44 @@ class Web extends Silk
 		}
 	}
 
-	// update to inject for testing
-	private function getWeeve()
+	private function setCallbacks($callback)
 	{
-		$Weeve = new Weeve();
-		$Weeve->conn    = $this->Connection->sleep();
-		$Weeve->table   = $this->table;
-		$Weeve->memory  = $this->memory;
-		$Weeve->trace   = $this->trace;
-		
-
-		return $Weeve;
+		// set the callbacks
+		if (is_callable($callback)) {
+			// @todo - Do better
+			foreach ($this->queries as $key => $query) {
+				$this->callbacks[$key] = $callback;
+			}
+		} else if (is_array($callback)) {
+			$this->callbacks = $callback;
+		}
 	}
 
+	/**
+	 * @return Spider\Nest\Nest
+	 */
+	private function getNest()
+	{
+		$Nest = new Nest();
+		$Nest->conn   = $this->Connection->sleep();
+		$Nest->table  = $this->table;
+		$Nest->memory = $this->memory;
+		$Nest->trace  = $this->trace;
+		
+		return $Nest;
+	}
+
+	/**
+	 * @return Spider\Storage\Decorator
+	 */
 	private function getStorage()
 	{
+		// see if storage has been set
 		if (!is_null($this->Storage)) {
 			return $this->Storage;
 		}
 
-		// default to mysql storage
+		// default to mysql storage, pull params from connection
 		$params = $this->Connection->params();
 
 		return new Storage\MySQL(

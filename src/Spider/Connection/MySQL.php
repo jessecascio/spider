@@ -6,9 +6,9 @@ use PDO;
 use PDOException;
 
 /**
- * MySQL driver
+ * MySQL connection
  *
- * @package Driver
+ * @package Connection
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
@@ -19,6 +19,9 @@ class MySQL implements Decorator
 	 */
 	private $pdo = null;
 
+	/**
+	 * @var array
+	 */
 	private $params = array();
 
 	/**

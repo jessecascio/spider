@@ -12,7 +12,7 @@ use Spider\Connection;
  * @see     jessesnet.com
  */
 
-require __DIR__ . "/../../../vendor/autoload.php";
+require __DIR__ . "/../../vendor/autoload.php";
 
 // grab the options
 // query
@@ -35,7 +35,8 @@ $result = $pdo->query($query);
 $s = json_decode(base64_decode($opts['s']),true);
 $Storage = new $s['class']();
 $Storage->wake($s['params']);
+$Storage->table($opts['o']);
 
-$Storage->store($opts['o'], base64_decode($opts['k']), $result);
+$Storage->store(base64_decode($opts['k']), $result);
 
 sleep(mt_rand(0,2));
