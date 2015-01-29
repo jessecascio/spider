@@ -22,4 +22,10 @@ interface Decorator
 	 * @return string
 	 */
 	public function sleep();
+
+	/**
+	 * @param string
+	 * @return array
+	 */
+	public function query($sql);
 }

@@ -60,21 +60,13 @@ class MySQL implements Decorator
 
 	/**
 	 * Run a query
+	 * @param string
 	 * @return array
 	 */
 	public function query($sql)
 	{
 		$stmt = $this->pdo->query($sql);
 		return $stmt->fetchAll();
-	}
-
-	/**
-	 * Insert
-	 * @param string
-	 */
-	public function insert($sql)
-	{
-		$this->pdo->query($sql);
 	}
 
 	/**
