@@ -4,7 +4,6 @@ namespace Spider;
 
 use Spider\Storage;
 use Spider\Connection;
-use Spider\Nest\Weeve;
 
 /**
  * Spider interface 
