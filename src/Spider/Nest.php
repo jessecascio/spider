@@ -53,7 +53,7 @@ class Nest
 	 */
 	public function spawn()
 	{
-		$php     = escapeshellarg(__DIR__ . "/weeve.php");
+		$php     = escapeshellarg(__DIR__ . "/bin/weeve.php");
 		$query   = base64_encode($this->query);
 		$conn    = base64_encode($this->conn);
 		$storage = base64_encode($this->storage);
