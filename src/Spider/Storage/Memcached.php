@@ -11,30 +11,40 @@ use Exception;
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-class Memcached
+class Memcached implements Decorator
 {
 	/**
 	 * @var Memcached
 	 */
 	private $Memcached = null;
 
-	public function __construct($host=null, $port=11211)
+	private $params = array();
+
+	private $table = '';
+
+	public function __construct($host='127.0.0.1', $port=11211)
 	{
 		$this->Memcached = new \Memcached();
-
-		if (!is_null($host)) {
-			$this->addServer($host, $port);
-		}
+		$this->params['host'] = $host;
+		$this->params['port'] = intval($port);
 	}
 
-	public function addServer($host, $port)
+	private function connect()
 	{
-		$this->Memcached->addServer($host, $port);
+		// @todo add multiserver support
+		$this->Memcached->addServer($this->params['host'], $this->params['port']);
 	}
 
-	public function addServers($servers)
+	public function table($table)
 	{
-		$this->Memcached->addServers($servers);
+		$this->table = $table;
+	}
+
+	public function destruct()
+	{
+		// need a way to clear
+		// @todo $this->Memcached->deleteMulti()
+		$this->Memcached = null;
 	}
 
 	/**
@@ -43,6 +53,7 @@ class Memcached
 	public function init()
 	{
 		// verify connection
+		$this->connect();
 	}
 
 	/**
@@ -50,27 +61,38 @@ class Memcached
 	 * @param string
 	 * @param string
 	 */
-	public function set($key, $val)
+	public function store($key, $val)
 	{
-
+		// figure out time, or part of destruct
+		$val = gzcompress(json_encode($val));
+		$this->Memcached->set($this->table.'_'.$key, $val, 60);
 	}
 
 	/**
 	 * Retrieve value
-	 * @param string
+	 * @param  string
+	 * @return mixed
 	 */
 	public function get($key)
 	{
-
+		$val = $this->Memcached->get($this->table.'_'.$key);
+		// @todo add checking
+		return json_decode(gzuncompress($val),true);
 	}
 
-	/**
-	 * Remove value
-	 * @param string
-	 */
-	public function remove($key)
+	public function wake($params)
 	{
-
+		$this->params = $params;
+		$this->connect();
 	}
 
+	public function sleep()
+	{
+		$d = array(
+    		'class'  => __CLASS__,
+    		'params' => $this->params
+    	);
+
+    	return json_encode($d);
+	}
 }

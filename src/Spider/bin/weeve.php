@@ -1,6 +1,6 @@
 <?php
 
-namespace Spider\Nest;
+namespace Spider\bin;
 
 use Spider\Connection;
 
@@ -39,4 +39,4 @@ $Storage->table($opts['o']);
 
 $Storage->store(base64_decode($opts['k']), $result);
 
-sleep(mt_rand(0,2));
+sleep(2);

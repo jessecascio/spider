@@ -24,6 +24,8 @@ class MySQL implements Decorator
 	 */
 	private $params = array();
 
+	private $table = '';
+
 	/**
      * @param string - database
 	 * @param string - user

@@ -1,7 +1,8 @@
 <?php
 
-use Spider\Web;
+use Spider\Component\Web;
 use Spider\Connection;
+use Spider\Storage;
 
 error_reporting(-1);
 
@@ -31,19 +32,93 @@ error_reporting(-1);
 require __DIR__ . "/vendor/autoload.php";
 
 $qs = [];
-$qs['emp'] = "SELECT * from page LIMIT 5000";
-$qs['emp3'] = "SELECT * from page LIMIT 5000";
-$qs['emp5'] = "SELECT * from page LIMIT 5000";
-$qs['em3p'] = "SELECT * from page LIMIT 5000";
-$qs['e3mp'] = "SELECT * from page LIMIT 5000";
-$qs['3emp'] = "SELECT * from page LIMIT 5000";
-$qs['e2mp'] = "SELECT * from page LIMIT 5000";
-$qs['emp2'] = "SELECT * from page LIMIT 5000";
-$qs['emp8'] = "SELECT * from page LIMIT 5000";
-$qs['em8p'] = "SELECT * from page LIMIT 5000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+$qs[] = "SELECT * from page LIMIT 10000";
+
+/*
+$dsn = 'mysql:host=127.0.0.1;port=3308;dbname=mediawiki;';
+
+$pdo = new PDO($dsn, 'root', '');
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pdo->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
+$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+$start = microtime(true);
+
+foreach ($qs as $q) {
+	$stmt = $pdo->query($q);
+	$stmt->fetchAll();
+//	sleep(mt_rand(2,4));
+}
+
+echo "TOOK: " . number_format(microtime(true)-$start,4);
+echo PHP_EOL;
+
+die();
+*/
+
+$start = microtime(true);
 
 $Connection = new Connection\MySQL('mediawiki','root','','127.0.0.1','3308');
+$Memcached  = new Storage\Memcached('127.0.0.1', 11211);
 
+$Web = new Web($Connection);
+// $Web->storage($Memcached);
+$Web->config('parameters.ini');
+$Web->queries($qs);
+$Web->crawl();
+
+$took = number_format(microtime(true)-$start,4);
+
+$count = 0;
+
+foreach ($Web->result as $set) {
+	$count += count($set);
+}
+
+$r = count($Web->result);
+
+// var_dump($Web->result);
+
+echo "$r RESULTS" . PHP_EOL;
+echo "$count TOTAL RESULTS" . PHP_EOL;
+echo "TOOK: " . $took;
+echo PHP_EOL;
+
+die();
+
+/*
+$Web->crawl(function($data){
+	echo "doing work..." . PHP_EOL;
+	$data = ['hello'=>'kitties'];
+	return $data;
+});
+*/
+
+//$Web->memory(100);
+//$Web->trace(__DIR__.'/out.trace');
 // $conn->insert("INSERT INTO foobar VALUES ('asdddd', 'asd')");
 
 $cbs = [

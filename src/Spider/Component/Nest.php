@@ -1,6 +1,6 @@
 <?php
 
-namespace Spider;
+namespace Spider\Component;
 
 /**
  * Creating new processes 
@@ -25,7 +25,7 @@ class Nest
 	/**
 	 * @var int
 	 */
-	public $memory = 10;
+	public $memory = 100;
 
 	/**
 	 * Trace path
@@ -53,7 +53,7 @@ class Nest
 	 */
 	public function spawn()
 	{
-		$php     = escapeshellarg(__DIR__ . "/bin/weeve.php");
+		$php     = escapeshellarg(__DIR__ . "/../bin/weeve.php");
 		$query   = base64_encode($this->query);
 		$conn    = base64_encode($this->conn);
 		$storage = base64_encode($this->storage);
