@@ -9,7 +9,7 @@ namespace Spider\Connection;
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-interface Decorator
+interface Connection
 {
 	/**
 	 * Connection params

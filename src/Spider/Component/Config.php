@@ -2,22 +2,51 @@
 
 namespace Spider\Component;
 
+/**
+ * Parse an .ini file for config options
+ *
+ * @package Nest
+ * @author  Jesse Cascio <jessecascio@gmail.com>
+ * @see     jessesnet.com
+ */
 class Config
-{
+{	
+	/**
+	 * @var array
+	 */
 	private $data = array();
 
-	public function __construct($ini_path)
+	/**
+	 * Path to .ini file
+	 * @param string
+	 */
+	public function __construct($ini='')
 	{
-		// if (!file_exists($ini_path)), faster!
-		if ($d = parse_ini_file($ini_path)) {
-			foreach ($d as $key => $val) {
-				$this->data[$key] = $val;
-			}
+		if (!is_file($ini)) {
+			return;
 		}
+
+		// test passing in an invalid file
+		$this->data = parse_ini_file($ini);
 	}
 
+	/**
+	 * @param mixed
+	 * @param mixed
+	 */
+	public function __set($key, $val)
+	{
+		$this->data[$key] = $val;
+	}
+
+	/**
+	 * @param  mixed
+	 * @return mixed
+	 */
 	public function __get($key) 
 	{
-		return $this->data[$key];
+		return isset($this->data[$key]) ? $this->data[$key] : null;
 	}
+
 }
+

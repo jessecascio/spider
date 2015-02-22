@@ -38,5 +38,3 @@ $Storage->wake($s['params']);
 $Storage->table($opts['o']);
 
 $Storage->store(base64_decode($opts['k']), $result);
-
-sleep(2);

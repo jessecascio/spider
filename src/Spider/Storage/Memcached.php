@@ -11,7 +11,7 @@ use Exception;
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-class Memcached implements Decorator
+class Memcached implements Storage
 {
 	/**
 	 * @var Memcached

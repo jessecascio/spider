@@ -3,10 +3,10 @@
 namespace Spider\Component;
 
 use Spider\Storage;
-use Spider\Connection;
+use Spider\Connection\Connection;
 
 /**
- * Spider interface 
+ * Spider interface , make the processes Observable ???
  *
  * @package Spider
  * @author  Jesse Cascio <jessecascio@gmail.com>
@@ -14,9 +14,17 @@ use Spider\Connection;
  */
 class Web extends Silk
 {
+	/**
+	 * @var int
+	 */
 	protected $max_process = 5;
 
+	/**
+	 * Target number of queries to complete
+	 * @var int
+	 */
 	protected $target = 0;
+	
 	/**
 	 * Unique id used for tmp table name
 	 * @var string
@@ -40,61 +48,55 @@ class Web extends Silk
 	 */
 	protected $callbacks = [];
 
-	// @todo Analyize purpose of silk, what else can move, hard to follow ???
-	// @todo Browse design patterns to find a match
-
 	/**
-	 * @param Spider\Connection\Decorator
+	 * @param Spider\Connection\Connection
 	 */
-	public function __construct(Connection\Decorator $Connection)
+	public function __construct(Connection $Connection)
 	{
 		// set unique id
 		$this->table = md5(uniqid('jessecascio/spider_'.getmypid(), true));
 		parent::__construct($Connection);
 	}
 
-	private function setStorage()
+	/**
+	 * Set Nest properties from config
+	 */
+	private function buildNest()
 	{
-		// see if storage has been set
-		if (!is_null($this->Storage)) {
+		if (is_null($this->Config)) {
 			return;
 		}
 
-		// default to mysql storage, pull params from connection
-		$params = $this->Connection->params();
-
-		$this->Storage = new Storage\MySQL(
-			$params['db'],
-			$params['usr'],
-			$params['pwd'],
-			$params['hst'],
-			$params['prt']
-		);
-	}
-
-	private function setNest()
-	{
-		$this->Nest = new Nest();
-		$this->Nest->conn  = $this->Connection->sleep();
-		$this->Nest->table = $this->table;
-		
-		if (is_null($this->Config)) {
-			return $this->Nest;	
-		}
-
-		if (trim($this->Config->memory)) {
+		// set the nest properties
+		if (trim($this->Config->memory) && intval($this->Config->memory) > 0) {
 			$this->Nest->memory = intval($this->Config->memory);
 		}
 
 		if (trim($this->Config->trace)) {
 			$this->Nest->trace = $this->Config->trace;
 		}
-		
-		return $this->Nest;
 	}
 
 	/**
+	 * Set the callbacks
 	 * @param mixed
+	 */
+	private function setCallbacks($callback)
+	{
+		// set the callbacks
+		if (is_callable($callback)) {
+			// @todo - Do better, map the callback to each query
+			foreach ($this->queries as $key => $query) {
+				$this->callbacks[$key] = $callback;
+			}
+		} else if (is_array($callback)) {
+			$this->callbacks = $callback;
+		}
+	}
+
+	/**
+	 * Run queries
+	 * @param mixed - callbacks
 	 */
 	public function crawl($callback=null)
 	{
@@ -102,41 +104,30 @@ class Web extends Silk
 			$this->setCallbacks($callback);
 		}
 
-		$this->setStorage();
-		$this->setNest();
-
+		$this->buildNest();
 		$this->Storage->table($this->table);
 		$this->Storage->init();
 
+		// notify Nest of the storage device
 		$this->Nest->storage = $this->Storage->sleep();
 
-		// @todo set max_process from config
+		// check max process override
 		if (trim($this->Config->processes) && intval($this->Config->processes) > 0) {
 			$this->max_process = intval($this->Config->processes);
 		}
 
-		// @todo stop passing the nest and storage around everywhere
 		$this->target = count($this->queries);
-		
-		$this->start($this->max_process);
-		
-		$this->wait();
-
-		/*
-		foreach ($this->queries as $key => $query) {
-			$this->Nest->query = $query;
-			$this->Nest->key   = $key;
-
-			$pid = $this->Nest->spawn();
-
-			$this->pid_key[$pid] = $key;
-			$this->pids[] = $pid;
-		}
-		*/
+	
+		$this->start($this->max_process);	
+		$this->watch();
 
 		$this->Storage->destruct();
 	}
 
+	/**
+	 * Start up processes
+	 * @param int
+	 */
 	private function start($max)
 	{
 		$started = 0;
@@ -152,113 +143,64 @@ class Web extends Silk
 
 			$pid = $this->Nest->spawn();
 
+			// map pids to query keys
 			$this->pid_key[$pid] = $key;
-			$this->pids[] = $pid;
+			$this->pids[]        = $pid;
 
 			$started++;
 			unset($this->queries[$key]);
 		}
-
 	}
 
-	private function wait()
+	/**
+	 * Monitor active processes
+	 */
+	private function watch()
 	{
 		$processed = [];
 
+		// continue until all work is finished
 		while (true) {
-			$procs = array_filter(array_map("trim", explode("\n", shell_exec("pgrep php")))); //left
+			// number of running processes
+			$procs = array_filter(array_map("trim", explode("\n", shell_exec("pgrep php")))); 
 			$done  = array_diff($this->pids, $procs); // completed pids
 
-			// have an array of total done
-			// need to determine which have not been processed
-			// @todo Dont need to retain key
-			$fresh = array_diff($done, $processed);
+			// jobs just finished
+			$finished = array_diff($done, $processed);
 			
-			if (count($fresh)) {
+			if (count($finished)) {
 				// start more processes
-				$less    = count($fresh);
-				var_dump($less); // @ todo remove
-				$this->start($less);
-
-				// echo "Jest finished: " . var_dump($fresh) . PHP_EOL;	
-				// grab the query key from the $pid_key
-				// fire the callback for that key
-				foreach ($fresh as $pid) {
-					$key = $this->pid_key[$pid];
-					
-					// if no callback, can be done in a single call
-					$this->result[$key] = $this->Storage->get($key);
-
-					if (isset($this->callbacks[$key]) && is_callable($this->callbacks[$key])) {
-						$this->result[$key] = $this->callbacks[$key]($this->result[$key]);
-					}
-				}
+				$this->start(count($finished));
+				$this->save($finished);
 			}
 
+			// track queries who have fired callbacks
 			$processed = array_unique(array_merge($done, $processed)); 
 			
+			// done when no more pids are running and all jobs have been processed
 			if (count(array_intersect($this->pids, $procs)) == 0 && count($this->result) == $this->target) {
 				break;
 			}
 		}
 	}
 
-	private function setCallbacks($callback)
+	/**
+	 * @param array
+	 */
+	private function save(array $pids)
 	{
-		// set the callbacks
-		if (is_callable($callback)) {
-			// @todo - Do better
-			foreach ($this->queries as $key => $query) {
-				$this->callbacks[$key] = $callback;
+		// fire the callbacks
+		foreach ($pids as $pid) {
+			// grab the query key
+			$key = $this->pid_key[$pid];
+			
+			// @todo If no callback, can be done in a single (get) call ???
+			$this->result[$key] = $this->Storage->get($key);
+
+			if (isset($this->callbacks[$key]) && is_callable($this->callbacks[$key])) {
+				$this->result[$key] = $this->callbacks[$key]($this->result[$key]);
 			}
-		} else if (is_array($callback)) {
-			$this->callbacks = $callback;
 		}
-	}
-
-	/**
-	 * @return Spider\Nest\Nest
-	 */
-	private function getNest()
-	{
-		$this->Nest = new Nest();
-		$this->Nest->conn  = $this->Connection->sleep();
-		$this->Nest->table = $this->table;
-		
-		if (is_null($this->Config)) {
-			return $this->Nest;	
-		}
-
-		if (trim($this->Config->memory)) {
-			$this->Nest->memory = intval($this->Config->memory);
-		}
-
-		if (trim($this->Config->trace)) {
-			$this->Nest->trace = $this->Config->trace;
-		}
-		
-		return $this->Nest;
-	}
-
-	/**
-	 * @return Spider\Storage\Decorator
-	 */
-	private function getStorage()
-	{
-		// see if storage has been set
-		if (!is_null($this->Storage)) {
-			return $this->Storage;
-		}
-
-		// default to mysql storage, pull params from connection
-		$params = $this->Connection->params();
-
-		return new Storage\MySQL(
-			$params['db'],
-			$params['usr'],
-			$params['pwd'],
-			$params['hst'],
-			$params['prt']
-		);
 	}
 }
+

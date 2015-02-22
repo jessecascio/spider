@@ -12,7 +12,7 @@ use PDOException;
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-class MySQL implements Decorator
+class MySQL implements Storage
 {
 	/**
 	 * @var PDO

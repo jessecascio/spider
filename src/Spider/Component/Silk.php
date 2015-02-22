@@ -2,8 +2,9 @@
 
 namespace Spider\Component;
 
-use Spider\Storage;
-use Spider\Connection;
+use Spider\Storage\Storage;
+use Spider\Storage\MySQL;
+use Spider\Connection\Connection;
 
 /**
  * Base getter/setter functionality 
@@ -40,20 +41,51 @@ class Silk
 	 */
 	public $result = [];
 
+	/**
+	 * @var Spider\Component\Nest
+	 */
 	protected $Nest;
 	
 	/**
-	 * @param Spider\Connection\Decorator
+	 * @param Spider\Connection\Connection
 	 */
-	public function __construct(Connection\Decorator $Connection)
+	public function __construct(Connection $Connection)
 	{
 		$this->Connection = $Connection;
+		// inject default dependencies
+		$this->injectStorage();
+		$this->injectNest();
 	}
 
 	/**
-	 * @param Spider\Storage\Decorator
+	 * find a different location
 	 */
-	public function storage(Storage\Decorator $Storage)
+	private function injectStorage()
+	{
+		// default to mysql storage, pull params from connection
+		$params = $this->Connection->params();
+
+		$this->Storage = new MySQL(
+			$params['db'],
+			$params['usr'],
+			$params['pwd'],
+			$params['hst'],
+			$params['prt']
+		);
+	}
+
+	private function injectNest()
+	{
+		$this->Nest = new Nest();
+		// Nest needs ability to pass connection params
+		$this->Nest->conn  = $this->Connection->sleep();
+		$this->Nest->table = $this->table;
+	}
+
+	/**
+	 * @param Spider\Storage\Storage
+	 */
+	public function storage(Storage $Storage)
 	{
 		$this->Storage = $Storage;
 	}
@@ -66,8 +98,23 @@ class Silk
 		$this->queries = $queries;
 	}
 
-	public function config($ini)
+	/**
+	 * Set config options
+	 * @param mixed
+	 * @param mixed
+	 */
+	public function config($key, $val=null)
 	{
-		$this->Config = new Config($ini);
+		// check for a file path
+		if (!isset($val) || !trim($val)) {
+			$this->Config = new Config($key);
+			return;
+		}
+
+		if (is_null($this->Config)) {
+			$this->Config = new Config();
+		}
+
+		$this->Config->{$key} = $val;
 	}
 }

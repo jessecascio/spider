@@ -9,7 +9,7 @@ namespace Spider\Storage;
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-interface Decorator
+interface Storage
 {
 	/**
 	 * Set table name
