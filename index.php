@@ -60,6 +60,7 @@ $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
+$qs['harry'] = "select * from page limit 1";
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
@@ -68,8 +69,7 @@ $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
-$qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
-$qs[] = "select * from page limit 1000";
+$qs['ford'] = "select * from page limit 2";
 
 /*
 $dsn = 'mysql:host=127.0.0.1;port=3308;dbname=mediawiki;';

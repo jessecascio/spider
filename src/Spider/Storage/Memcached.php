@@ -63,9 +63,8 @@ class Memcached implements Storage
 	 */
 	public function store($key, $val)
 	{
-		// figure out time, or part of destruct
 		$val = gzcompress(json_encode($val));
-		$this->Memcached->set($this->table.'_'.$key, $val);
+		$this->Memcached->set($this->table.'_'.$key, $val, 600);
 	}
 
 	/**
@@ -74,7 +73,7 @@ class Memcached implements Storage
 	 * @return mixed
 	 */
 	public function get($key)
-	{
+	{	
 		$this->keys[] = $this->table.'_'.$key;
 		$val = $this->Memcached->get($this->table.'_'.$key);
 		// @todo add checking
@@ -83,20 +82,18 @@ class Memcached implements Storage
 
 	public function all(array $ids)
 	{
-		$keys = array();
+		$this->keys = array();
 
-		// @todo Improve
-		foreach ($ids as $id) {
-			$keys[] = $this->table.'_'.$id;
+		$this->keys = preg_filter('/^/', $this->table.'_', $ids);
+		$data = $this->Memcached->getMulti($this->keys);
+		
+		$result = array();
+
+		foreach ($data as $key => $val) {
+			$result[str_replace($this->table.'_', '', $key)] = json_decode(gzuncompress($val),true);
 		}
 
-		$vals = $this->Memcached->getMulti($keys);
-
-		foreach ($vals as $key => $val) {
-			$vals[$key] = json_decode(gzuncompress($val),true);
-		}
-
-		return $vals;
+		return $result;
 	}
 
 	public function wake($params)

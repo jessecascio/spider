@@ -105,7 +105,6 @@ class MySQL implements Storage
 	}
 
 	/**
-	 * Retrieve value
 	 * @param string
 	 */
 	public function get($id)
@@ -122,9 +121,12 @@ class MySQL implements Storage
 		return $data['data']; 
 	}
 
+	/**
+	 * @param array
+	 */
 	public function all(array $ids)
 	{
-		$sql = "SELECT data
+		$sql = "SELECT id, data
 				FROM `".$this->table."` 
 				WHERE id IN ('".implode("','", $ids)."')";
 
@@ -133,9 +135,8 @@ class MySQL implements Storage
 
 		$result = array();
 
-		// @todo Improve
 		foreach ($data as $item) {
-			$result[] = json_decode(gzuncompress($item['data']), true);
+			$result[$item['id']] = json_decode(gzuncompress($item['data']), true);
 		}
 		
 		return $result; 
