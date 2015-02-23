@@ -79,9 +79,7 @@ class Web
 	 */
 	private function setCallbacks($callback)
 	{
-		// set the callbacks
 		if (is_callable($callback)) {
-			// @todo Test this
 			$this->callbacks = array_fill_keys(array_keys($this->queries), $callback);
 		} else if (is_array($callback)) {
 			$this->callbacks = $callback;
