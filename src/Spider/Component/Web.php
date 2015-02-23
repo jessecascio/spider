@@ -2,79 +2,75 @@
 
 namespace Spider\Component;
 
-use Spider\Storage;
 use Spider\Connection\Connection;
+use Spider\Storage\Storage;
 
 /**
- * Spider interface , make the processes Observable ???
+ * Spider interface
  *
  * @package Spider
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
-class Web extends Silk
-{
+class Web
+{	
 	/**
-	 * @var int
+	 * @var Spider\Component\Config
 	 */
-	protected $max_process = 5;
-
-	/**
-	 * Target number of queries to complete
-	 * @var int
-	 */
-	protected $target = 0;
-	
-	/**
-	 * Unique id used for tmp table name
-	 * @var string
-	 */
-	protected $table = '';
+	private $Config = null;
 
 	/**
 	 * @var array
 	 */
-	protected $pids = [];
+	private $queries = array();
+	
+	/**
+	 * Results
+	 * @var array
+	 */
+	private $results = array();
+
+	/**
+	 * @var array
+	 */
+	private $pids = array();
 
 	/**
 	 * Map pids to query keys
 	 * @var array
 	 */
-	protected $pid_key = [];
+	private $pid_key = array();
 
 	/**
 	 * Map query keys to callback functions
 	 * @var array
 	 */
-	protected $callbacks = [];
+	private $callbacks = array();
 
 	/**
 	 * @param Spider\Connection\Connection
+	 * @param Spider\Component\Config
 	 */
-	public function __construct(Connection $Connection)
+	public function __construct(Connection $Connection, Config $Config=null)
 	{
-		// set unique id
-		$this->table = md5(uniqid('jessecascio/spider_'.getmypid(), true));
-		parent::__construct($Connection);
+		$this->Config = is_null($Config) ? new Config() : $Config;
+		$this->Config->connection($Connection);
 	}
 
 	/**
-	 * Set Nest properties from config
+	 * @param array
 	 */
-	private function buildNest()
+	public function queries(array $queries)
 	{
-		if (is_null($this->Config)) {
-			return;
-		}
+		$this->queries = $queries;
+	}
 
-		// set the nest properties
-		if (trim($this->Config->memory) && intval($this->Config->memory) > 0) {
-			$this->Nest->memory = intval($this->Config->memory);
-		}
-
-		if (trim($this->Config->trace)) {
-			$this->Nest->trace = $this->Config->trace;
-		}
+	/**
+	 * @return array
+	 */
+	public function results()
+	{
+		return $this->results;
 	}
 
 	/**
@@ -85,10 +81,8 @@ class Web extends Silk
 	{
 		// set the callbacks
 		if (is_callable($callback)) {
-			// @todo - Do better, map the callback to each query
-			foreach ($this->queries as $key => $query) {
-				$this->callbacks[$key] = $callback;
-			}
+			// @todo Test this
+			$this->callbacks = array_fill_keys(array_keys($this->queries), $callback);
 		} else if (is_array($callback)) {
 			$this->callbacks = $callback;
 		}
@@ -104,24 +98,18 @@ class Web extends Silk
 			$this->setCallbacks($callback);
 		}
 
-		$this->buildNest();
-		$this->Storage->table($this->table);
-		$this->Storage->init();
+		$Storage = $this->Config->getStorage();
+		$Storage->table($this->Config->getTable());
+		$Storage->init();
 
-		// notify Nest of the storage device
-		$this->Nest->storage = $this->Storage->sleep();
+		$this->Nest = new Nest($this->Config);
 
-		// check max process override
-		if (trim($this->Config->processes) && intval($this->Config->processes) > 0) {
-			$this->max_process = intval($this->Config->processes);
-		}
+		$target = count($this->queries);
 
-		$this->target = count($this->queries);
-	
-		$this->start($this->max_process);	
-		$this->watch();
+		$this->start($this->Config->getProcesses());	
+		$this->watch($target);
 
-		$this->Storage->destruct();
+		$Storage->destruct();
 	}
 
 	/**
@@ -155,9 +143,9 @@ class Web extends Silk
 	/**
 	 * Monitor active processes
 	 */
-	private function watch()
+	private function watch($target)
 	{
-		$processed = [];
+		$processed = array();
 
 		// continue until all work is finished
 		while (true) {
@@ -178,7 +166,7 @@ class Web extends Silk
 			$processed = array_unique(array_merge($done, $processed)); 
 			
 			// done when no more pids are running and all jobs have been processed
-			if (count(array_intersect($this->pids, $procs)) == 0 && count($this->result) == $this->target) {
+			if (count(array_intersect($this->pids, $procs)) == 0 && count($this->results) == $target) {
 				break;
 			}
 		}
@@ -189,16 +177,18 @@ class Web extends Silk
 	 */
 	private function save(array $pids)
 	{
+		$Storage = $this->Config->getStorage();
+
 		// fire the callbacks
 		foreach ($pids as $pid) {
 			// grab the query key
 			$key = $this->pid_key[$pid];
 			
 			// @todo If no callback, can be done in a single (get) call ???
-			$this->result[$key] = $this->Storage->get($key);
+			$this->results[$key] = $Storage->get($key);
 
 			if (isset($this->callbacks[$key]) && is_callable($this->callbacks[$key])) {
-				$this->result[$key] = $this->callbacks[$key]($this->result[$key]);
+				$this->results[$key] = $this->callbacks[$key]($this->results[$key]);
 			}
 		}
 	}

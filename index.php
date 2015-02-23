@@ -1,6 +1,7 @@
 <?php
 
 use Spider\Component\Web;
+use Spider\Component\Config;
 use Spider\Connection;
 use Spider\Storage;
 
@@ -97,9 +98,11 @@ $start = microtime(true);
 $Connection = new Connection\MySQL('mediawiki','root','','127.0.0.1','3308');
 $Memcached  = new Storage\Memcached('127.0.0.1', 11211);
 
-$Web = new Web($Connection);
-$Web->storage($Memcached);
-$Web->config('parameters.ini');
+$Config = new Config();
+$Config->parse('parameters.ini');
+$Config->storage($Memcached);
+
+$Web = new Web($Connection, $Config);
 $Web->queries($qs);
 $Web->crawl();
 
@@ -107,11 +110,11 @@ $took = number_format(microtime(true)-$start,4);
 
 $count = 0;
 
-foreach ($Web->result as $set) {
+foreach ($Web->results() as $set) {
 	$count += count($set);
 }
 
-$r = count($Web->result);
+$r = count($Web->results());
 
 // var_dump($Web->result);
 
@@ -139,6 +142,18 @@ $cbs = [
 		echo "woot" . PHP_EOL;
 	}
 ];
+
+/*	
+	$Config = new Config();
+	$Config->parse('parameters.ini');
+	$Config->storage($Memcached);
+
+	$Web = new Web($Connection, $Config);
+
+*/
+
+$Config = new Config();
+$Config->parse('parameters.ini');
 
 $Web = new Web($Connection);
 // $Web->storage($Memcached);

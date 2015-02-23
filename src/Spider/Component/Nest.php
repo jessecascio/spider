@@ -11,10 +11,7 @@ namespace Spider\Component;
  */
 class Nest
 {	
-	/**
-	 * @var string
-	 */
-	public $table = '';
+	protected $Config;
 
 	/**
 	 * Query key
@@ -23,43 +20,34 @@ class Nest
 	public $key = '';
 
 	/**
-	 * @var int
-	 */
-	public $memory = 100;
-
-	/**
-	 * Trace path
-	 * @var string
-	 */
-	public $trace = '/dev/null';
-
-	/**
 	 * @var string
 	 */
 	public $query = '';
 
-	/**
-	 * @var string
-	 */
-	public $conn = '';
-
-	/**
-	 * @var string
-	 */
-	public $storage = '';
+	public function __construct(Config $Config)
+	{
+		$this->Config = $Config;
+	}
 
 	/**
 	 * Create new process
 	 */
 	public function spawn()
 	{
+		$Storage    = $this->Config->getStorage();
+		$Connection = $this->Config->getConnection();
+
 		$php     = escapeshellarg(__DIR__ . "/../bin/weeve.php");
 		$query   = base64_encode($this->query);
-		$conn    = base64_encode($this->conn);
-		$storage = base64_encode($this->storage);
+		$conn    = base64_encode($Connection->sleep());
+		$storage = base64_encode($Storage->sleep());
 		$key     = base64_encode($this->key);
+		$memory  = $this->Config->getMemory();
+		$table   = $this->Config->getTable(); // encode ???
+		$trace   = $this->Config->getTrace();
 
-		$cmd = "php ".$php." -k".$key." -q".$query." -m".$this->memory." -o".$this->table." -c".$conn." -s".$storage." >> ".$this->trace." 2>&1 & echo $!";
+		// $this->Storage->sleep()
+		$cmd = "php ".$php." -k".$key." -q".$query." -m".$memory." -o".$table." -c".$conn." -s".$storage." >> ".$trace." 2>&1 & echo $!";
 		
 		return trim(shell_exec($cmd));
 	}
