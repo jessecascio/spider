@@ -7,7 +7,7 @@ use Spider\Storage\MySQL;
 use Spider\Connection\Connection;
 
 /**
- * Parse an .ini file for config options
+ * Hold configuraion options
  *
  * @package Component
  * @author  Jesse Cascio <jessecascio@gmail.com>
@@ -15,16 +15,34 @@ use Spider\Connection\Connection;
  */
 class Config
 {	
+	/**
+	 * @var int
+	 */
 	protected $processes = 5;
 
-	protected $memory    = 100;
+	/**
+	 * @var int - MB
+	 */
+	protected $memory = 100;
 
-	protected $trace     = '/dev/null';
+	/**
+	 * @var string - full path
+	 */
+	protected $trace = '/dev/null';
 
+	/**
+	 * @var string
+	 */
 	protected $table = '';
 
+	/**
+	 * @var Spider\Connection\Connection
+	 */
 	protected $Connection;
 
+	/**
+	 * @var Spider\Storage\Storage
+	 */
 	protected $Storage;
 
 	public function __construct()
@@ -33,8 +51,8 @@ class Config
 	}
 
 	/**
-	 * Path to .ini file
-	 * @param string
+	 * Parse .ini file
+	 * @param string - path
 	 */
 	public function parse($ini)
 	{
@@ -55,60 +73,98 @@ class Config
 		}
 	}
 
+	/**
+	 * @param int
+	 */
 	public function processes($processes)
 	{
 		$this->processes = intval($processes) > 0 ? intval($processes) : $this->processes;
 	}
 
+	/**
+	 * @return int
+	 */
 	public function getProcesses()
 	{
 		return $this->processes;
 	}
 
+	/**
+	 * @param int - MB
+	 */
 	public function memory($memory)
 	{
 		$this->memory = intval($memory) > 0 ? intval($memory) : $this->memory;
 	}
 
+	/**
+	 * @return int
+	 */
 	public function getMemory()
 	{
 		return $this->memory;
-	}
+	}	
 
+	/**
+	 * @param string - path
+	 */
 	public function trace($trace)
 	{
-		$this->trace = is_writable($trace) ? $trace : $this->trace;
+		$this->trace = is_string($trace) && strpos($trace, '.') && touch($trace) ? $trace : $this->trace;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getTrace()
 	{
 		return $this->trace;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getTable()
 	{
 		return $this->table;
 	}
 
+	/**
+	 * @param Spider\Connection\Connection
+	 */
 	public function connection(Connection $Connection)
 	{
 		$this->Connection = $Connection;
 	}
 
+	/**
+	 * @return Spider\Connection\Connection
+	 */
 	public function getConnection()
 	{
 		return $this->Connection;
 	}
 
+	/**
+	 * @param Spider\Storage\Storage
+	 */
 	public function storage(Storage $Storage)
 	{
 		$this->Storage = $Storage;
 	}
 
+	/**
+	 * @throws LogicException
+	 * @return Spider\Storage\Storage
+	 */
 	public function getStorage()
 	{
 		if (!is_null($this->Storage)) {
 			return $this->Storage;
+		}
+
+		if (is_null($this->Connection)) {
+			throw new \LogicException("Spider\\Connection\\Connection is required");
 		}
 
 		// default to mysql storage, pull params from connection

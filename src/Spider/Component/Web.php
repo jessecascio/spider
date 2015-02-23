@@ -179,8 +179,6 @@ class Web
 			$Storage = $this->Config->getStorage();
 			$this->results = $Storage->all($this->pid_key);
 		}
-
-		var_dump($this->results);
 	}
 
 	/**
@@ -195,8 +193,13 @@ class Web
 			// grab the query key
 			$key = $this->pid_key[$pid];
 			
-			$this->results[$key] = $Storage->get($key);
-
+			try {
+				$this->results[$key] = $Storage->get($key);
+			} catch (\Exception $e) {
+				// should log to $Config->trace
+				$this->results[$key] = null;
+			}
+			
 			if (isset($this->callbacks[$key]) && is_callable($this->callbacks[$key])) {
 				$this->results[$key] = $this->callbacks[$key]($this->results[$key]);
 			}

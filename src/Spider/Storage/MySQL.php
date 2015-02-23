@@ -24,6 +24,9 @@ class MySQL implements Storage
 	 */
 	private $params = array();
 
+	/**
+	 * @var string
+	 */
 	private $table = '';
 
 	/**
@@ -92,9 +95,9 @@ class MySQL implements Storage
 	}
 
 	/**
-	 * Save value
-	 * @param string
-	 * @param mixed
+	 * @param  string
+	 * @param  mixed
+	 * @throws PDOException
 	 */
 	public function store($id, $data)
 	{
@@ -105,7 +108,8 @@ class MySQL implements Storage
 	}
 
 	/**
-	 * @param string
+	 * @param  string
+	 * @return mixed
 	 */
 	public function get($id)
 	{
@@ -114,11 +118,15 @@ class MySQL implements Storage
 				WHERE id=".$this->pdo->quote($id);
 
 		$stmt = $this->pdo->query($sql);
-		$data = $stmt->fetchAll()[0];
+		$data = $stmt->fetchAll();
 		
-		$data['data'] = json_decode(gzuncompress($data['data']), true);
+		if (!count($data) || !isset($data['data'])) {
+			return null;
+		}
+
+		$data[0]['data'] = json_decode(gzuncompress($data[0]['data']), true);
 			
-		return $data['data']; 
+		return $data[0]['data']; 
 	}
 
 	/**
@@ -141,24 +149,14 @@ class MySQL implements Storage
 		
 		return $result; 
 	}
-
-	/**
-	 * Remove value
-	 * @param string
-	 */
-	public function remove($id)
-	{
-
-	}
  	
  	/**
- 	 * Encoded params
- 	 * @return string
+ 	 * @return string - encoded params
  	 */
  	public function sleep()
     {
     	$d = array(
-    		'class'  => __CLASS__,
+    		'class'  => __CLASS__, // needed for correct instantiation
     		'params' => $this->params
     	);
 
@@ -166,8 +164,7 @@ class MySQL implements Storage
     }
 
     /**
-     * Re-connect
-     * @param array
+     * @param array - re-connect
      */
     public function wake($params)
     {

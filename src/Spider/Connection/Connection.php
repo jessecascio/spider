@@ -18,7 +18,7 @@ interface Connection
 	public function params();
 
 	/**
-	 * Encoded connection params
+	 * JSON encoded connection params
 	 * @return string
 	 */
 	public function sleep();

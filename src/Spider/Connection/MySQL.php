@@ -46,6 +46,7 @@ class MySQL implements Connection
 
 	/**
 	 * Connect to database
+	 * @throws PDOException
 	 */
 	protected function connect()
 	{
@@ -60,7 +61,8 @@ class MySQL implements Connection
 
 	/**
 	 * Run a query
-	 * @param string
+	 * @param  string
+	 * @throws PDOException
 	 * @return array
 	 */
 	public function query($sql)
@@ -70,7 +72,6 @@ class MySQL implements Connection
 	}
 
 	/**
-	 * Encoded connection params
 	 * @return string
 	 */
 	public function sleep()
@@ -79,7 +80,6 @@ class MySQL implements Connection
     }
  	
  	/**
-	 * Connection params
 	 * @return array
 	 */
  	public function params()

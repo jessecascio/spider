@@ -3,7 +3,7 @@
 namespace Spider\Component;
 
 /**
- * Creates new processes 
+ * Process Management
  *
  * @package Component
  * @author  Jesse Cascio <jessecascio@gmail.com>
@@ -11,21 +11,38 @@ namespace Spider\Component;
  */
 class Nest
 {	
+	/**
+	 * @var string
+	 */
 	private $script;
 
+	/**
+	 * @var string - Connection sleep params
+	 */
 	private $conn;
 
+	/**
+	 * @var string - Storage sleep params
+	 */
 	private $storage;
 
+	/**
+	 * @var int
+	 */
 	private $memory;
 
+	/**
+	 * @var string
+	 */
 	private $table;
 
+	/**
+	 * @var string
+	 */
 	private $trace;
 
 	/**
-	 * Query key
-	 * @var string
+	 * @var string - query key
 	 */
 	public $key = '';
 

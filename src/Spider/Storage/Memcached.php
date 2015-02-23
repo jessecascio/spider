@@ -18,12 +18,25 @@ class Memcached implements Storage
 	 */
 	private $Memcached = null;
 
+	/**
+	 * @var array
+	 */
 	private $params = array();
 
+	/**
+	 * @var string
+	 */
 	private $table = '';
 
+	/**
+	 * @var array
+	 */
 	private $keys = array();
 
+	/**
+	 * @param string
+	 * @param int
+	 */
 	public function __construct($host='127.0.0.1', $port=11211)
 	{
 		$this->Memcached = new \Memcached();
@@ -31,17 +44,26 @@ class Memcached implements Storage
 		$this->params['port'] = intval($port);
 	}
 
+	/**
+	 * Connect
+	 */
 	private function connect()
 	{
 		// @todo add multiserver support
 		$this->Memcached->addServer($this->params['host'], $this->params['port']);
 	}
 
+	/**
+	 * @param string
+	 */
 	public function table($table)
 	{
 		$this->table = $table;
 	}
 
+	/**
+	 * Tear down
+	 */
 	public function destruct()
 	{
 		$this->Memcached->deleteMulti($this->keys);
@@ -58,25 +80,37 @@ class Memcached implements Storage
 
 	/**
 	 * Save value
-	 * @param string
-	 * @param string
+	 * @param  string
+	 * @param  string
+	 * @throws RunTimeException
 	 */
 	public function store($key, $val)
 	{
 		$val = gzcompress(json_encode($val));
-		$this->Memcached->set($this->table.'_'.$key, $val, 600);
+		if ($this->Memcached->set($this->table.'_'.$key, $val, 600) === false) {
+			$msg  = $this->Memcached->getResultMessage();
+			$code = $this->Memcached->getResultCode();
+			throw new \RunTimeException("Memcached Error (store): " . $msg . "(".$code.")");
+		}
 	}
 
 	/**
 	 * Retrieve value
 	 * @param  string
 	 * @return mixed
+	 * @throws RunTimeException
 	 */
 	public function get($key)
 	{	
 		$this->keys[] = $this->table.'_'.$key;
 		$val = $this->Memcached->get($this->table.'_'.$key);
-		// @todo add checking
+		
+		if (!is_string($val)) {
+			$msg  = $this->Memcached->getResultMessage();
+			$code = $this->Memcached->getResultCode();
+			throw new \RunTimeException("Memcached Error (get): " . $msg . "(".$code.")");
+		}
+
 		return json_decode(gzuncompress($val),true);
 	}
 
