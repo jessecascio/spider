@@ -22,6 +22,8 @@ class Memcached implements Storage
 
 	private $table = '';
 
+	private $keys = array();
+
 	public function __construct($host='127.0.0.1', $port=11211)
 	{
 		$this->Memcached = new \Memcached();
@@ -42,9 +44,7 @@ class Memcached implements Storage
 
 	public function destruct()
 	{
-		// need a way to clear
-		// @todo $this->Memcached->deleteMulti()
-		$this->Memcached = null;
+		$this->Memcached->deleteMulti($this->keys);
 	}
 
 	/**
@@ -65,7 +65,7 @@ class Memcached implements Storage
 	{
 		// figure out time, or part of destruct
 		$val = gzcompress(json_encode($val));
-		$this->Memcached->set($this->table.'_'.$key, $val, 60);
+		$this->Memcached->set($this->table.'_'.$key, $val);
 	}
 
 	/**
@@ -75,9 +75,28 @@ class Memcached implements Storage
 	 */
 	public function get($key)
 	{
+		$this->keys[] = $this->table.'_'.$key;
 		$val = $this->Memcached->get($this->table.'_'.$key);
 		// @todo add checking
 		return json_decode(gzuncompress($val),true);
+	}
+
+	public function all(array $ids)
+	{
+		$keys = array();
+
+		// @todo Improve
+		foreach ($ids as $id) {
+			$keys[] = $this->table.'_'.$id;
+		}
+
+		$vals = $this->Memcached->getMulti($keys);
+
+		foreach ($vals as $key => $val) {
+			$vals[$key] = json_decode(gzuncompress($val),true);
+		}
+
+		return $vals;
 	}
 
 	public function wake($params)

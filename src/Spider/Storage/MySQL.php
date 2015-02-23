@@ -122,6 +122,25 @@ class MySQL implements Storage
 		return $data['data']; 
 	}
 
+	public function all(array $ids)
+	{
+		$sql = "SELECT data
+				FROM `".$this->table."` 
+				WHERE id IN ('".implode("','", $ids)."')";
+
+		$stmt = $this->pdo->query($sql);
+		$data = $stmt->fetchAll();
+
+		$result = array();
+
+		// @todo Improve
+		foreach ($data as $item) {
+			$result[] = json_decode(gzuncompress($item['data']), true);
+		}
+		
+		return $result; 
+	}
+
 	/**
 	 * Remove value
 	 * @param string

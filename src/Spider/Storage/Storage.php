@@ -38,6 +38,11 @@ interface Storage
 	public function get($id);
 
 	/**
+	 * @param array
+	 */
+	public function all(array $ids);
+
+	/**
  	 * Encoded params
  	 * @return string
  	 */

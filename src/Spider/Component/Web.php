@@ -8,7 +8,7 @@ use Spider\Storage\Storage;
 /**
  * Spider interface
  *
- * @package Spider
+ * @package Component
  * @author  Jesse Cascio <jessecascio@gmail.com>
  * @see     jessesnet.com
  */
@@ -111,8 +111,7 @@ class Web
 	}
 
 	/**
-	 * Start up processes
-	 * @param int
+	 * @param int - num processes
 	 */
 	private function start($max)
 	{
@@ -140,6 +139,7 @@ class Web
 
 	/**
 	 * Monitor active processes
+	 * @param int
 	 */
 	private function watch($target)
 	{
@@ -157,7 +157,12 @@ class Web
 			if (count($finished)) {
 				// start more processes
 				$this->start(count($finished));
-				$this->save($finished);
+				// fire callbacks, or track result count
+				if (count($this->callbacks)) {
+					$this->save($finished);
+				} else {
+					$this->results = array_merge($this->results, $finished);
+				}
 			}
 
 			// track queries who have fired callbacks
@@ -168,6 +173,14 @@ class Web
 				break;
 			}
 		}
+
+		// no callbacks, pull all results at once
+		if (!count($this->callbacks)) {
+			$Storage = $this->Config->getStorage();
+			$this->results = $Storage->all($this->pid_key);
+		}
+
+		var_dump($this->results);
 	}
 
 	/**
@@ -182,7 +195,6 @@ class Web
 			// grab the query key
 			$key = $this->pid_key[$pid];
 			
-			// @todo If no callback, can be done in a single (get) call ???
 			$this->results[$key] = $Storage->get($key);
 
 			if (isset($this->callbacks[$key]) && is_callable($this->callbacks[$key])) {
@@ -190,5 +202,6 @@ class Web
 			}
 		}
 	}
+
 }
 

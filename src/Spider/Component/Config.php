@@ -3,6 +3,7 @@
 namespace Spider\Component;
 
 use Spider\Storage\Storage;
+use Spider\Storage\MySQL;
 use Spider\Connection\Connection;
 
 /**
