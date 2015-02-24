@@ -123,8 +123,8 @@ class MySQL implements Storage
 		$stmt = $this->pdo->query($sql);
 		$data = $stmt->fetchAll();
 		
-		if (!count($data) || !isset($data['data'])) {
-			return null;
+		if (!count($data) || !isset($data[0]['data'])) {
+			return false;
 		}
 
 		$data[0]['data'] = json_decode(gzuncompress($data[0]['data']), true);
@@ -133,7 +133,7 @@ class MySQL implements Storage
 	}
 
 	/**
-	 * @param array
+	 * @param  array
 	 * @throws PDOException
 	 */
 	public function all(array $ids)
@@ -150,7 +150,7 @@ class MySQL implements Storage
 		foreach ($data as $item) {
 			$result[$item['id']] = json_decode(gzuncompress($item['data']), true);
 		}
-		
+
 		return $result; 
 	}
  	
