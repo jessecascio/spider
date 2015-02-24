@@ -105,9 +105,9 @@ class Web
 		}
 
 		$Storage = $this->Config->getStorage();
+		$Storage->table($this->Config->getTable());
 
 		try {
-			$Storage->table($this->Config->getTable());
 			$Storage->init();	
 		} catch (Exception $e) {
 			$this->Logger->addError('Unable to init storage', [$e->getMessage()]);
@@ -176,7 +176,7 @@ class Web
 			if (count($finished)) {
 				// start more processes
 				$this->start(count($finished));
-				// fire callbacks, or track result count
+				// fire callbacks, or just track result count
 				if (count($this->callbacks)) {
 					$this->save($finished);
 				} else {
@@ -187,7 +187,7 @@ class Web
 			// track queries who have fired callbacks
 			$processed = array_unique(array_merge($done, $processed)); 
 			
-			// done when no more pids are running and all jobs have been processed
+			// done when no more pids are running AND all jobs have been processed
 			if (count(array_intersect($this->pids, $procs)) == 0 && count($this->results) == $target) {
 				break;
 			}
