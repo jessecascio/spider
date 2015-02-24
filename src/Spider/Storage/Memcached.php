@@ -74,7 +74,6 @@ class Memcached implements Storage
 	 */
 	public function init()
 	{
-		// verify connection
 		$this->connect();
 	}
 
@@ -87,6 +86,7 @@ class Memcached implements Storage
 	public function store($key, $val)
 	{
 		$val = gzcompress(json_encode($val));
+
 		if ($this->Memcached->set($this->table.'_'.$key, $val, 600) === false) {
 			$msg  = $this->Memcached->getResultMessage();
 			$code = $this->Memcached->getResultCode();
@@ -95,25 +95,33 @@ class Memcached implements Storage
 	}
 
 	/**
-	 * Retrieve value
 	 * @param  string
-	 * @return mixed
 	 * @throws RunTimeException
+	 * @return mixed
 	 */
 	public function get($key)
 	{	
 		$this->keys[] = $this->table.'_'.$key;
 		$val = $this->Memcached->get($this->table.'_'.$key);
 		
-		if (!is_string($val)) {
+		if ($val === false) {
 			$msg  = $this->Memcached->getResultMessage();
 			$code = $this->Memcached->getResultCode();
 			throw new \RunTimeException("Memcached Error (get): " . $msg . "(".$code.")");
 		}
 
+		if (!is_string($val)) {
+			throw new \RunTimeException("Memcached Error (get): Bad Data Pulled, Not a String");
+		}
+
 		return json_decode(gzuncompress($val),true);
 	}
 
+	/**
+	 * @param array
+	 * @throws RunTimeException
+	 * @return array
+	 */
 	public function all(array $ids)
 	{
 		$this->keys = array();
@@ -121,6 +129,12 @@ class Memcached implements Storage
 		$this->keys = preg_filter('/^/', $this->table.'_', $ids);
 		$data = $this->Memcached->getMulti($this->keys);
 		
+		if ($data === false) {
+			$msg  = $this->Memcached->getResultMessage();
+			$code = $this->Memcached->getResultCode();
+			throw new \RunTimeException("Memcached Error (all): " . $msg . "(".$code.")");
+		}
+
 		$result = array();
 
 		foreach ($data as $key => $val) {
@@ -130,12 +144,18 @@ class Memcached implements Storage
 		return $result;
 	}
 
-	public function wake($params)
+	/**
+	 * @param array
+	 */
+	public function wake(array $params)
 	{
 		$this->params = $params;
 		$this->connect();
 	}
 
+	/**
+	 * @return string
+	 */
 	public function sleep()
 	{
 		$d = array(

@@ -4,6 +4,7 @@ use Spider\Component\Web;
 use Spider\Component\Config;
 use Spider\Connection;
 use Spider\Storage;
+use Spider\Component\Logger;
 
 error_reporting(-1);
 
@@ -31,6 +32,13 @@ error_reporting(-1);
 */
 
 require __DIR__ . "/vendor/autoload.php";
+
+/*
+$log = Logger::instance('trace.out');
+$log->addError('booty', ['asdasdsad']);
+
+return;
+*/
 
 $qs = []; // SLEEP(FLOOR(0 + (RAND() * 2)))
 $qs[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 2)))";
@@ -104,7 +112,7 @@ $Config->storage($Memcached);
 
 $Web = new Web($Connection, $Config);
 $Web->queries($qs);
-$Web->crawl();
+$Web->crawl(function($data) {return $data;});
 
 $took = number_format(microtime(true)-$start,4);
 

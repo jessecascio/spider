@@ -35,7 +35,6 @@ class MySQL implements Storage
 	 * @param string - password
 	 * @param string - host
 	 * @param int    - port
-	 * @throws PDOException
 	 */
 	public function __construct($db='test',$usr='root',$pwd='',$hst='127.0.0.1',$prt=3306)
 	{
@@ -48,6 +47,7 @@ class MySQL implements Storage
 
 	/**
 	 * Make db connection
+	 * @throws PDOException
 	 */
 	protected function connect()
 	{
@@ -71,6 +71,7 @@ class MySQL implements Storage
 
 	/**
 	 * Storage setup
+	 * @throws PDOException
 	 */
 	public function init()
 	{
@@ -87,6 +88,7 @@ class MySQL implements Storage
 
 	/**
 	 * Storage teardown
+	 * @throws PDOException
 	 */
 	public function destruct()
 	{
@@ -110,6 +112,7 @@ class MySQL implements Storage
 	/**
 	 * @param  string
 	 * @return mixed
+	 * @throws PDOException
 	 */
 	public function get($id)
 	{
@@ -131,6 +134,7 @@ class MySQL implements Storage
 
 	/**
 	 * @param array
+	 * @throws PDOException
 	 */
 	public function all(array $ids)
 	{
@@ -165,8 +169,9 @@ class MySQL implements Storage
 
     /**
      * @param array - re-connect
+     * @throws PDOException
      */
-    public function wake($params)
+    public function wake(array $params)
     {
     	$this->params = $params;
     	$this->connect();

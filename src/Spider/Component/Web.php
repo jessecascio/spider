@@ -2,6 +2,7 @@
 
 namespace Spider\Component;
 
+use Exception;
 use Spider\Connection\Connection;
 use Spider\Storage\Storage;
 
@@ -18,6 +19,11 @@ class Web
 	 * @var Spider\Component\Config
 	 */
 	private $Config = null;
+
+	/**
+	 * @var Spider\Component\Logger
+	 */
+	private $Logger = null;
 
 	/**
 	 * @var array
@@ -55,6 +61,8 @@ class Web
 	{
 		$this->Config = is_null($Config) ? new Config() : $Config;
 		$this->Config->connection($Connection);
+
+		$this->Logger = Logger::instance($Config->getTrace());
 	}
 
 	/**
@@ -97,9 +105,15 @@ class Web
 		}
 
 		$Storage = $this->Config->getStorage();
-		$Storage->table($this->Config->getTable());
-		$Storage->init();
 
+		try {
+			$Storage->table($this->Config->getTable());
+			$Storage->init();	
+		} catch (Exception $e) {
+			$this->Logger->addError('Unable to init storage', [$e->getMessage()]);
+			return;
+		}
+		
 		$this->Nest = new Nest($this->Config);
 
 		$target = count($this->queries);
@@ -107,7 +121,12 @@ class Web
 		$this->start($this->Config->getProcesses());	
 		$this->watch($target);
 
-		$Storage->destruct();
+		try {
+			$Storage->destruct();
+		} catch (Exception $e) {
+			$this->Logger->addError('Unable to destroy storage', [$e->getMessage()]);
+			return;
+		}
 	}
 
 	/**
@@ -177,7 +196,13 @@ class Web
 		// no callbacks, pull all results at once
 		if (!count($this->callbacks)) {
 			$Storage = $this->Config->getStorage();
-			$this->results = $Storage->all($this->pid_key);
+
+			try {
+				$this->results = $Storage->all($this->pid_key);
+			} catch (Exception $e) {
+				$this->Logger->addError('Unable to pull all results', [$e->getMessage()]);
+				return;
+			}
 		}
 	}
 
@@ -195,9 +220,10 @@ class Web
 			
 			try {
 				$this->results[$key] = $Storage->get($key);
-			} catch (\Exception $e) {
-				// should log to $Config->trace
+			} catch (Exception $e) {
+				$this->Logger->addError('Unable to pull results', [$e->getMessage(), 'key'=>$key]);
 				$this->results[$key] = null;
+				continue;
 			}
 			
 			if (isset($this->callbacks[$key]) && is_callable($this->callbacks[$key])) {

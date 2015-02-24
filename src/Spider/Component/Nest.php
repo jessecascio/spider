@@ -74,14 +74,16 @@ class Nest
 	{
 		$query = base64_encode($this->query);
 		$key   = base64_encode($this->key);
-		
+		$file  = base64_encode($this->trace);
+
 		$cmd = "php ".$this->script." ".
 			"-k".$key." ".
 			"-q".$query." ".
 			"-m".$this->memory." ".
-			"-o".$this->table." ".
+			"-t".$this->table." ".
 			"-c".$this->conn." ".
 			"-s".$this->storage." ".
+			"-f".$file." ".
 			">> ".$this->trace." 2>&1 & echo $!";
 		
 		return trim(shell_exec($cmd));

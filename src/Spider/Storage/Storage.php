@@ -52,5 +52,5 @@ interface Storage
      * Re-connect
      * @param array
      */
-    public function wake($params);
+    public function wake(array $params);
 }
