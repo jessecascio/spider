@@ -108,7 +108,7 @@ $Memcached  = new Storage\Memcached('127.0.0.1', 11211);
 
 $Config = new Config();
 $Config->parse('parameters.ini');
-$Config->storage($Memcached);
+// $Config->storage($Memcached);
 
 $Web = new Web($Connection, $Config);
 $Web->queries($qs);

@@ -203,6 +203,13 @@ class Web
 				$this->Logger->addError('Unable to pull all results', [$e->getMessage()]);
 				return;
 			}
+
+			// verify all keys filled
+			foreach ($this->pid_key as $key) {
+				if (!isset($this->results[$key])) {
+					$this->results[$key] = false;
+				}
+			}
 		}
 	}
 
@@ -222,7 +229,7 @@ class Web
 				$this->results[$key] = $Storage->get($key);
 			} catch (Exception $e) {
 				$this->Logger->addError('Unable to pull results', [$e->getMessage(), 'key'=>$key]);
-				$this->results[$key] = null;
+				$this->results[$key] = false;
 				continue;
 			}
 			
