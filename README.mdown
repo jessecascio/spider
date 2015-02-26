@@ -1,7 +1,7 @@
-Spider - MySQL Asynchronous PHP Library
-==============================
+Spider 
+========
 
-[Spider](http://jessesnet.com/portfolio) is a PHP library offering asynchronous MySQL queries.  While there are other ways to achieve this, such as mysqlnd or pthreads, Spider was built to have no outside dependencies except for a connection to a MySQL database.
+[Spider](http://jessesnet.com/portfolio) is a PHP library offering asynchronous MySQL querying.  While there are other ways to achieve this, such as mysqlnd or pthreads, Spider was built to have no outside dependencies except for a connection to a MySQL database.
 
 Usage
 -----
