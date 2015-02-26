@@ -78,7 +78,7 @@ class MySQL implements Storage
 		$this->connect();
 		
 		// create temp table
-		$sql = "CREATE TABLE if not exists `".$this->table."` (
+		$sql = "CREATE TABLE `".$this->table."` (
 					`id` varchar(255) primary key,
 					`data` LONGBLOB 
 				)ENGINE=innodb";
