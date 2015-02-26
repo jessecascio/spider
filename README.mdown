@@ -78,6 +78,7 @@ use Spider\Component;
 use Spider\Storage;
 
 $memcached = new Storage\Memcached($host, $port);
+
 $config = new Component\Config();
 $config->storage($memcached);
 ```
@@ -100,6 +101,7 @@ $queries = array();
 $queries['users']  = "SELECT * FROM users";
 $queries['orders'] = "SELECT * FROM orders"
 
+$web->queries($queries);
 $Web->crawl([
     'users' => function ($data) {
         // do work on users data
