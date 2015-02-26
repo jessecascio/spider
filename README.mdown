@@ -91,7 +91,7 @@ with either a single callback applied to all queries, or specific callbacks mapp
 
 ```php
 // single callback
-$Web->crawl(function($data) {
+$web->crawl(function($data) {
     // do work
     return $data;
 });
@@ -102,7 +102,7 @@ $queries['users']  = "SELECT * FROM users";
 $queries['orders'] = "SELECT * FROM orders"
 
 $web->queries($queries);
-$Web->crawl([
+$web->crawl([
     'users' => function ($data) {
         // do work on users data
         return $data;
