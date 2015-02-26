@@ -13,7 +13,7 @@ use Spider\Component\Logger;
  * @see     jessesnet.com
  */
 
-require __DIR__ . "/../../../vendor/autoload.php";
+require __DIR__ . "/../../../../../autoload.php";
 
 $opts = getopt("q:m:t:k:c:s:f:");
 
