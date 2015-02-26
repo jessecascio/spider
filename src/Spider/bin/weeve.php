@@ -13,11 +13,11 @@ use Spider\Component\Logger;
  * @see     jessesnet.com
  */
 
+error_reporting(E_ALL);
 require __DIR__ . "/../../../../../autoload.php";
 
 $opts = getopt("q:m:t:k:c:s:f:");
 
-error_reporting(E_ALL);
 ini_set("memory_limit", intval($opts['m']) . "M");
 
 $Logger = Logger::instance(base64_decode($opts['f']));

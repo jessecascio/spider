@@ -1,0 +1,129 @@
+Spider - MySQL Asynchronous PHP Library
+==============================
+
+[Spider](http://jessesnet.com/portfolio) is a PHP library offering asynchronous MySQL queries.  While there are other ways to achieve this, such as mysqlnd or pthreads, Spider was built to have no outside dependencies except for a connection to a MySQL database.
+
+Usage
+-----
+
+Install the latest version with `composer require jessecascio/spider`
+
+```php
+<?php
+
+use Spider\Connection;
+use Spider\Component;
+
+// build an array of queries
+$queries   = array();
+$queries[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 1)))";
+$queries[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 1)))";
+$queries[] = "SELECT SLEEP(FLOOR(0 + (RAND() * 1)))";
+
+// create a MySQL Connection
+$connection = new Connection\MySQL($dbname, $usr, $pwd, $host, $port);
+
+// execute
+$web = new Component\Web($connection);
+$web->queries($queries);
+$web->crawl();
+
+// proceed
+$web->results();
+
+```
+
+Concepts
+----------
+
+Since PHP does not natively support threading, or parallel execution, Spider take the queries and processes them in their own 
+process.  After the query executes, it is placed into temporary storage until all queries have completed.  Once all queries are 
+done, the results are returned to the calling process. 
+
+Docs
+====
+
+Configurations
+---------------
+
+With the use of multiple processes it become very important to be able to control both the number and the size of the processes. 
+Also, by defining a log output, errors can be correctly logged during process failure.
+
+```php
+use Spider\Component;
+
+$config = new Component\Config();
+$config->processes(5);
+$config->memory(100); // MB
+$config->trace('/path/to/log');
+```
+
+Alternatively these can be loaded from an .ini file to allow for different settings in different environments.
+
+```php
+use Spider\Component;
+
+$config = new Component\Config();
+$config->parse('/path/to/file.ini');
+```
+
+Storage
+--------
+
+By default Spider will store results in a temporary MySQL table.  There are however other `Storage` methods.  If for example, you
+would rather have results stored in Memcached, simply instantiate the correct `Storage` object
+
+```php
+use Spider\Component;
+use Spider\Storage;
+
+$memcached = new Storage\Memcached($host, $port);
+$config = new Component\Config();
+$config->storage($memcached);
+```
+
+Callbacks
+----------
+
+Often times it is beneficial to process queries as they complete and not have to wait until all queries are done.  This can be done 
+with either a single callback applied to all queries, or specific callbacks mapped to query keys.
+
+```php
+// single callback
+$Web->crawl(function($data) {
+    // do work
+    return $data;
+});
+
+// multiple callbacks
+$queries = array();
+$queries['users']  = "SELECT * FROM users";
+$queries['orders'] = "SELECT * FROM orders"
+
+$Web->crawl([
+    'users' => function ($data) {
+        // do work on users data
+        return $data;
+    },
+    'orders' => function ($data) {
+        // do work on orders data
+        return $data;
+    }
+])
+
+```
+
+Considerations
+----------------
+
+Special considerations will need to be made for the number of processes to run and that allowed size.  Since most web servers are
+ limited on resources you need to ensure that Spider does not spin up too many processes and that those processes do not get too 
+ large.  With can be done with the `Component\Config` object
+
+There is additional overhead for running the queries in this manner.  Not only the cost of spinning up and monitoring the 
+processes, but also of all the additional reads and writes into the temporary storages.  Typically Spider would not be beneficial 
+unless your total query time is over 1s.  Some good use cases for Spider are querying a large horizontal star table where each 
+component can be queried individually, to return to PHP for aggregation building, or for querying across multiple shards.
+
+Testing should be done to determine optimal process count/size and typical return times on batch queries.
+
