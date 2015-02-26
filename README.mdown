@@ -36,7 +36,7 @@ $web->results();
 Concepts
 ----------
 
-Since PHP does not natively support threading, or parallel execution, Spider take the queries and processes them in their own 
+Since PHP does not natively support threading, or parallel execution, Spider takes the queries and processes them in their own 
 process.  After the query executes, it is placed into temporary storage until all queries have completed.  Once all queries are 
 done, the results are returned to the calling process. 
 
@@ -46,7 +46,7 @@ Docs
 Configurations
 ---------------
 
-With the use of multiple processes it become very important to be able to control both the number and the size of the processes. 
+With the use of multiple processes it becomes very important to control both the number and the size of the processes. 
 Also, by defining a log output, errors can be correctly logged during process failure.
 
 ```php
@@ -70,7 +70,7 @@ $config->parse('/path/to/file.ini');
 Storage
 --------
 
-By default Spider will store results in a temporary MySQL table.  There are however other `Storage` methods.  If for example, you
+By default Spider will store results in a temporary MySQL table.  There are however other `Storage` objects.  For example, if you
 would rather have results stored in Memcached, simply instantiate the correct `Storage` object
 
 ```php
@@ -118,7 +118,7 @@ Considerations
 
 Special considerations will need to be made for the number of processes to run and that allowed size.  Since most web servers are
  limited on resources you need to ensure that Spider does not spin up too many processes and that those processes do not get too 
- large.  With can be done with the `Component\Config` object
+ large.  With can be done with the `Component\Config` object.
 
 There is additional overhead for running the queries in this manner.  Not only the cost of spinning up and monitoring the 
 processes, but also of all the additional reads and writes into the temporary storages.  Typically Spider would not be beneficial 
