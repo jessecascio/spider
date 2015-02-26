@@ -1,7 +1,10 @@
 {
     "name": "jessecascio/spider",
     "description": "MySQL Parallel Query Library",
+    "keywords": ["mysql asynchronous","mysql parallel"],
+    "homepage": "https://github.com/jessecascio/spider",
     "license": "MIT",
+    "type": "library",
     "authors": [
         {
             "name": "Jesse Cascio",
