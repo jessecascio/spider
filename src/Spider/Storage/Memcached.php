@@ -118,7 +118,7 @@ class Memcached implements Storage
 	}
 
 	/**
-	 * @param array
+	 * @param  array
 	 * @throws RunTimeException
 	 * @return array
 	 */

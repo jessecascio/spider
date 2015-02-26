@@ -26,6 +26,11 @@ class Web
 	private $Logger = null;
 
 	/**
+	 * @var Spider\Component\Nest
+	 */
+	private $Nest = null;
+
+	/**
 	 * @var array
 	 */
 	private $queries = array();
@@ -63,6 +68,7 @@ class Web
 		$this->Config->connection($Connection);
 
 		$this->Logger = Logger::instance($Config->getTrace());
+		$this->Nest   = new Nest($this->Config);
 	}
 
 	/**
@@ -100,22 +106,23 @@ class Web
 	 */
 	public function crawl($callback=null)
 	{
+		if (!count($this->queries)) {
+			return;
+		}
+
 		if (!is_null($callback)) {
 			$this->setCallbacks($callback);
 		}
 
-		$Storage = $this->Config->getStorage();
-		$Storage->table($this->Config->getTable());
-
 		try {
+			$Storage = $this->Config->getStorage();
+			$Storage->table($this->Config->getTable());
 			$Storage->init();	
 		} catch (Exception $e) {
-			$this->Logger->addError('Unable to init storage', [$e->getMessage()]);
+			$this->Logger->addError('Unable to load storage', [$e->getMessage()]);
 			return;
 		}
 		
-		$this->Nest = new Nest($this->Config);
-
 		$target = count($this->queries);
 
 		$this->start($this->Config->getProcesses());	
@@ -188,28 +195,14 @@ class Web
 			$processed = array_unique(array_merge($done, $processed)); 
 			
 			// done when no more pids are running AND all jobs have been processed
-			if (count(array_intersect($this->pids, $procs)) == 0 && count($this->results) == $target) {
+			if (count($this->results) == $target && count(array_intersect($this->pids, $procs)) == 0) {
 				break;
 			}
 		}
 
 		// no callbacks, pull all results at once
 		if (!count($this->callbacks)) {
-			$Storage = $this->Config->getStorage();
-
-			try {
-				$this->results = $Storage->all($this->pid_key);
-			} catch (Exception $e) {
-				$this->Logger->addError('Unable to pull all results', [$e->getMessage()]);
-				return;
-			}
-
-			// verify all keys filled
-			foreach ($this->pid_key as $key) {
-				if (!isset($this->results[$key])) {
-					$this->results[$key] = false;
-				}
-			}
+			$this->saveAll();
 		}
 	}
 
@@ -239,5 +232,26 @@ class Web
 		}
 	}
 
+	/**
+	 * Pull results at once
+	 */
+	private function saveAll()
+	{
+		$Storage = $this->Config->getStorage();
+
+		try {
+			$this->results = $Storage->all($this->pid_key);
+		} catch (Exception $e) {
+			$this->Logger->addError('Unable to pull all results', [$e->getMessage()]);
+			return;
+		}
+
+		// verify all keys filled
+		foreach ($this->pid_key as $key) {
+			if (!isset($this->results[$key])) {
+				$this->results[$key] = false;
+			}
+		}	
+	}
 }
 

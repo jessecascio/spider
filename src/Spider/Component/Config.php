@@ -7,7 +7,7 @@ use Spider\Storage\MySQL;
 use Spider\Connection\Connection;
 
 /**
- * Hold configuraion options
+ * Hold configuration options
  *
  * @package Component
  * @author  Jesse Cascio <jessecascio@gmail.com>
