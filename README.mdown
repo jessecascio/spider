@@ -56,6 +56,8 @@ $config = new Component\Config();
 $config->processes(5);
 $config->memory(100); // MB
 $config->trace('/path/to/log');
+
+$web = new Component\Web($connection, $config);
 ```
 
 Alternatively these can be loaded from an .ini file to allow for different settings in different environments.
