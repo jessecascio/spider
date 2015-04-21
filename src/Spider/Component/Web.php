@@ -70,6 +70,14 @@ class Web
 		$this->Logger = Logger::instance($Config->getTrace());
 		$this->Nest   = new Nest($this->Config);
 	}
+	
+	/**
+	 * @param \Spider\Component\Nest
+	 */
+	public function setNest(Nest $Nest)
+	{
+		$this->Nest = $Nest;
+	}
 
 	/**
 	 * @param array
